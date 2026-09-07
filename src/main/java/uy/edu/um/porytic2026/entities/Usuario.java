@@ -17,10 +17,22 @@ import lombok.*;
 
 public class Usuario {
 
-    @Id
+    @Id //Id interna del sistema
     private long id;
 
-    @Column(name = "nombre")
+    @Column(name = "contraseña")
+    private long userPassword; //Hasheada y salteada por seguridad
+
+    @Column(name = "teléfono")
+    private long userPhone;
+
+    @Column(name = "correo")
+    @Email(message = "Formato de correo electrónico no válido") //Mensaje cuando ocurre la validación
+    private long userEmail;
+
+    /*
+
+    @Column(name = "nombre") //Nombre completo
     @NotEmpty
     @NotNull
     @NotBlank
@@ -33,8 +45,9 @@ public class Usuario {
     @Column(name = "nombreUsuario")
     private String userName;
 
-    @Email(message = "Formato de correo electrónico no válido") //Mensaje cuando ocurre la validación
-    private long userEmail;
+
+*/
+
 
 
 }
