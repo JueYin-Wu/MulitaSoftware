@@ -7,30 +7,31 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "sanciones")
+@Table(name = "sanctions")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Sancion {
+
+public class Sanction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "motivo")
+    @Column(name = "reason")
     @NotBlank
-    private String motivo;
+    private String reason;
 
-    @Column(name = "fecha")
-    private LocalDateTime fecha;
-
-    @ManyToOne
-    @JoinColumn(name = "prestador_id", nullable = false)
-    private Prestador prestador;
+    @Column(name = "date")
+    private LocalDateTime date;
 
     @ManyToOne
-    @JoinColumn(name = "administrador_id", nullable = false)
-    private Administrador administrador;
+    @JoinColumn(name = "provider_id", nullable = false)
+    private Provider provider;
+
+    @ManyToOne
+    @JoinColumn(name = "administrator_id", nullable = false)
+    private Administrator administrator;
 }

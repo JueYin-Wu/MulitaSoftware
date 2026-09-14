@@ -5,22 +5,28 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Entity
-@Table(name = "equipamientos")
+@Table(name = "participants")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Equipamiento {
+
+public class Participant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nombre")
+    @Column(name = "first_name")
     @NotBlank
-    private String nombre;
+    private String firstName;
 
-    @Column(name = "descripcion")
-    private String descripcion;
+    @Column(name = "last_name")
+    @NotBlank
+    private String lastName;
+
+    @ManyToOne
+    @JoinColumn(name = "booking_id", nullable = false)
+    private Booking booking;
 }

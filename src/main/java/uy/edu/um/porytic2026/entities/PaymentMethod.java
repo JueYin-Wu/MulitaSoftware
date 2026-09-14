@@ -7,30 +7,31 @@ import lombok.*;
 import java.time.YearMonth;
 
 @Entity
-@Table(name = "medios_pago")
+@Table(name = "payment_methods")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MedioDePago {
+
+public class PaymentMethod {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo")
-    private TipoTarjeta tipo;
+    @Column(name = "type")
+    private CardType type;
 
-    @Column(name = "ultimosDigitos")
+    @Column(name = "last_digits")
     @Size(min = 4, max = 4)
-    private String ultimosDigitos;
+    private String lastDigits;
 
-    @Column(name = "vencimiento")
-    private YearMonth vencimiento;
+    @Column(name = "expiration_date")
+    private YearMonth expirationDate;
 
     @ManyToOne
-    @JoinColumn(name = "turista_id", nullable = false)
-    private Turista turista;
+    @JoinColumn(name = "tourist_id", nullable = false)
+    private Tourist tourist;
 }

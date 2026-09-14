@@ -6,22 +6,22 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "prestadores")
+@Table(name = "providers")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @NoArgsConstructor
 @SuperBuilder
 
-public class Prestador extends Usuario {
+public class Provider extends User {
 
-    @Column(name = "nombreFantasia")
+    @Column(name = "business_name")
     @NotBlank
-    private String nombreFantasia;
+    private String businessName;
 
-    @Column(name = "direccion")
-    private String direccion;
+    @Column(name = "address")
+    private String address;
 
-    @Column(name = "descripcionServ")
-    private String descripcionServ;
+    @Column(name = "service_description")
+    private String serviceDescription;
 }

@@ -9,10 +9,11 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class Ubicacion {
+public class Location {
 
-    private String departamento;
-    private String barrio;
-    private String calle;
-    private String nro;
+    private String department;
+    private String neighborhood;
+    private String street;
+    private String number;
+
 }

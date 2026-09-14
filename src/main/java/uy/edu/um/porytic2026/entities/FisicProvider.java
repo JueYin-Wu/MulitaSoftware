@@ -6,20 +6,15 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "personasJuridicas")
+@Table(name = "fisic_providers")
 @Getter
 @Setter
 @NoArgsConstructor
 @SuperBuilder
 
-public class PersonaJuridica extends Prestador {
+public class FisicProvider extends Provider {
 
-    @Column(name = "RUT", unique = true)
+    @Column(name = "national_id", unique = true)
     @NotBlank
-    private String rut;
-
-    @Column(name = "Responsable")
-    @NotBlank
-    private String responsable;
-
+    private String nationalId;
 }

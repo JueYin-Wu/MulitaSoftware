@@ -8,32 +8,31 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "disponibilidades")
+@Table(name = "availabilities")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
-public class Disponibilidad {
+public class Availability {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "fecha")
+    @Column(name = "date")
     @NotNull
-    private LocalDate fecha;
+    private LocalDate date;
 
-    @Column(name = "hora")
+    @Column(name = "time")
     @NotNull
-    private LocalTime hora;
+    private LocalTime time;
 
-    @Column(name = "cupos")
+    @Column(name = "capacity")
     @PositiveOrZero
-    private Integer cupos;
+    private Integer capacity;
 
     @ManyToOne
-    @JoinColumn(name = "actividad_id", nullable = false)
-    private Actividad actividad;
+    @JoinColumn(name = "activity_id", nullable = false)
+    private Activity activity;
 }

@@ -5,11 +5,12 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "administradores")
+@Table(name = "administrators")
 @Getter
 @Setter
 @NoArgsConstructor
 @SuperBuilder
 
-public class Administrador extends Usuario {
+public class Administrator extends User {
+
 }
