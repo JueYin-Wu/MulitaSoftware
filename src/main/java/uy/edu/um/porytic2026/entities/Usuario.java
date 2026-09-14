@@ -1,30 +1,30 @@
 package uy.edu.um.porytic2026.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name= "usuarios")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 
 public class Usuario {
 
     @Id
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "nombre")
     @NotEmpty
     @NotNull
     @NotBlank
-    @Size(max = 30, min = 10)
+    @Size(max = 30, min = 3)
     private String name;
 
     @Column(name = "apellido")
@@ -33,8 +33,14 @@ public class Usuario {
     @Column(name = "nombreUsuario")
     private String userName;
 
+    @Column(name = "correo")
     @Email(message = "Formato de correo electrónico no válido") //Mensaje cuando ocurre la validación
-    private long userEmail;
+    private String userEmail;
 
+    @Column(name = "contraseña")
+    private String userPassword;
+
+    @Column(name = "teléfono")
+    private String userPhone;
 
 }
