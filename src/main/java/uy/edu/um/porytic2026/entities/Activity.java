@@ -34,18 +34,22 @@ public class Activity {
     private String requirements;
 
     @Column(name = "minimum_age")
+    @PositiveOrZero
     private Integer minimumAge;
 
     @Column(name = "booking_deadline")
+    @PositiveOrZero
     private Integer bookingDeadline; // minutos
 
     @Column(name = "cancellation_minutes")
+    @PositiveOrZero
     private Integer cancellationMinutes;
 
     @Column(name = "refundable")
     private Boolean refundable;
 
     @Column(name = "refund_percentage")
+    @PositiveOrZero
     private Integer refundPercentage;
 
     @Embedded
