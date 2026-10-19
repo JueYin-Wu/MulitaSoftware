@@ -28,6 +28,7 @@
                 <th:block th:if="${loggedIn}">
                     <a th:if="${currentRole == 'ADMIN'}" th:href="@{/admin/providers}" class="nav-link">Panel de administración</a>
                     <a th:if="${currentRole == 'PROVIDER'}" th:href="@{/provider}" class="nav-link">Mi portal</a>
+                    <a th:if="${currentRole == 'TOURIST'}" th:href="@{/tourist}" class="nav-link">Mi perfil</a>
                     <span class="nav-user">Hola, <strong th:text="${currentUsername}">usuario</strong></span>
                     <form th:action="@{/logout}" method="post" class="inline-form">
                         <button type="submit" class="btn btn-outline btn-sm">Salir</button>

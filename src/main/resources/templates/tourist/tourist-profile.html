@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${tourist.firstName})}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="detail-page">
+    <div class="container">
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+
+        <!-- Encabezado: foto, nombre y usuario -->
+        <section class="profile-head">
+            <span th:replace="~{fragments/avatar :: avatar(${tourist}, 'lg')}"></span>
+            <div class="profile-info">
+                <span class="chip chip-cyan">Turista</span>
+                <h1 th:text="${tourist.firstName}">Nombre</h1>
+                <p class="profile-handle" th:text="'@' + ${tourist.username}">@usuario</p>
+                <p class="muted"
+                   th:text="${#lists.size(completedBookings)} + (${#lists.size(completedBookings)} == 1 ? ' actividad realizada' : ' actividades realizadas') + ' · ' + ${#lists.size(reviews)} + (${#lists.size(reviews)} == 1 ? ' reseña' : ' reseñas')">
+                    2 actividades realizadas · 1 reseña</p>
+            </div>
+
+            <!-- Solo el dueño del perfil puede cambiar su foto -->
+            <div class="profile-photo-actions" th:if="${isOwner}">
+                <h2>Foto de perfil</h2>
+                <p class="muted">JPG, PNG o WEBP, hasta 2 MB.</p>
+                <form th:action="@{/tourist/profile-image(${_csrf.parameterName}=${_csrf.token})}" method="post"
+                      enctype="multipart/form-data" class="upload-form">
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+                    <button type="submit" class="btn btn-primary btn-sm">Subir foto</button>
+                </form>
+                <form th:if="${tourist.profileImageUrl != null}" th:action="@{/tourist/profile-image/delete}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn-outline btn-sm">Quitar foto</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Próximas reservas: solo las ve el propio turista -->
+        <section class="detail-section profile-block" th:if="${isOwner}">
+            <h2>Mis próximas reservas</h2>
+            <p class="muted" th:if="${#lists.isEmpty(upcomingBookings)}">No tenés reservas próximas.</p>
+            <ul class="booking-list" th:unless="${#lists.isEmpty(upcomingBookings)}">
+                <li class="booking-item" th:each="booking : ${upcomingBookings}">
+                    <img th:if="${booking.availability.activity.imageUrl != null}" th:src="@{${booking.availability.activity.imageUrl}}" alt="">
+                    <div class="booking-info">
+                        <a th:href="@{/activities/{id}(id=${booking.availability.activity.id})}" th:text="${booking.availability.activity.name}">Actividad</a>
+                        <span class="muted" th:text="${#temporals.format(booking.availability.date, 'dd/MM/yyyy')} + ' · ' + ${#temporals.format(booking.availability.time, 'HH:mm')} + ' · ' + ${booking.participantCount} + (${booking.participantCount} == 1 ? ' persona' : ' personas')">Fecha</span>
+                    </div>
+                    <span class="chip" th:classappend="${booking.status.name() == 'CONFIRMED'} ? 'chip-green' : 'chip-orange'"
+                          th:text="${booking.status.name() == 'CONFIRMED'} ? 'Confirmada' : 'Pendiente'">Confirmada</span>
+                </li>
+            </ul>
+        </section>
+
+        <section class="detail-section profile-block">
+            <h2>Actividades realizadas</h2>
+            <p class="muted" th:if="${#lists.isEmpty(completedBookings)}">Todavía no realizó actividades.</p>
+            <ul class="booking-list" th:unless="${#lists.isEmpty(completedBookings)}">
+                <li class="booking-item" th:each="booking : ${completedBookings}">
+                    <img th:if="${booking.availability.activity.imageUrl != null}" th:src="@{${booking.availability.activity.imageUrl}}" alt="">
+                    <div class="booking-info">
+                        <a th:href="@{/activities/{id}(id=${booking.availability.activity.id})}" th:text="${booking.availability.activity.name}">Actividad</a>
+                        <span class="muted" th:text="${#temporals.format(booking.availability.date, 'dd/MM/yyyy')} + ' · ' + ${booking.availability.activity.provider.businessName}">Fecha</span>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <section class="detail-section profile-block">
+            <h2>Reseñas</h2>
+            <p class="muted" th:if="${#lists.isEmpty(reviews)}">Todavía no dejó reseñas.</p>
+            <article class="review" th:each="review : ${reviews}">
+                <div class="review-head">
+                    <a th:href="@{/activities/{id}(id=${review.booking.availability.activity.id})}">
+                        <strong th:text="${review.booking.availability.activity.name}">Actividad</strong>
+                    </a>
+                    <span class="stars small" th:attr="aria-label='Valoración ' + ${review.rating} + ' de 5'">
+                        <span th:each="i : ${#numbers.sequence(1, 5)}" th:text="${i <= review.rating} ? '★' : '☆'">★</span>
+                    </span>
+                    <span class="muted" th:text="${#temporals.format(review.booking.availability.date, 'dd/MM/yyyy')}">01/10/2026</span>
+                </div>
+                <p th:text="${review.comment}">Comentario</p>
+            </article>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

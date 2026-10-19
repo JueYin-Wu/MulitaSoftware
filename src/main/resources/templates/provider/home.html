@@ -12,7 +12,30 @@
             <p>Este es el portal de tu emprendimiento en Uruguay Mnatural.</p>
         </div>
 
-        <div class="alert alert-success">Tu cuenta está aprobada. Ya podés gestionar tu emprendimiento.</div>
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+        <div class="alert alert-success" th:unless="${message != null or error != null}">Tu cuenta está aprobada. Ya podés gestionar tu emprendimiento.</div>
+
+        <!-- Foto de perfil: se ve en las actividades y en el perfil público -->
+        <section class="info-card profile-photo-card">
+            <span th:replace="~{fragments/avatar :: avatar(${provider}, 'lg')}"></span>
+            <div class="profile-photo-actions">
+                <h2>Foto de perfil</h2>
+                <p class="muted">Es la imagen que ven los turistas en tus actividades y en tu perfil. JPG, PNG o WEBP, hasta 2 MB.</p>
+                <!-- El token de seguridad va también en la dirección para que funcione con archivos (multipart) -->
+                <form th:action="@{/provider/profile-image(${_csrf.parameterName}=${_csrf.token})}" method="post"
+                      enctype="multipart/form-data" class="upload-form">
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+                    <button type="submit" class="btn btn-primary btn-sm">Subir foto</button>
+                </form>
+                <div class="upload-links">
+                    <form th:if="${provider.profileImageUrl != null}" th:action="@{/provider/profile-image/delete}" method="post" class="inline-form">
+                        <button type="submit" class="btn btn-outline btn-sm">Quitar foto</button>
+                    </form>
+                    <a th:href="@{/providers/{id}(id=${provider.id})}" class="btn btn-outline btn-sm">Ver mi perfil público</a>
+                </div>
+            </div>
+        </section>
 
         <div class="info-grid">
             <section class="info-card">

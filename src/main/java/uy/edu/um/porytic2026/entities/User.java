@@ -39,4 +39,34 @@ public class User {
 
     @Column(name = "phone")
     private String phone;
+
+    // Foto de perfil (opcional), por ejemplo "/uploads/users/user-5-ab12.jpg". La pueden tener turistas y prestadores.
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
+    // Nombre que se muestra en pantalla. Provider lo sobrescribe con el nombre del emprendimiento.
+    public String getDisplayName() {
+        if (lastName == null || lastName.isBlank()) {
+            return firstName;
+        }
+        return firstName + " " + lastName;
+    }
+
+    // Iniciales para cuando no hay foto ("Aventuras del Este" -> "AE", "Sofía Gómez" -> "SG")
+    public String getInitials() {
+        String name = getDisplayName();
+        if (name == null || name.isBlank()) {
+            return "?";
+        }
+        StringBuilder initials = new StringBuilder();
+        for (String word : name.trim().split("\\s+")) {
+            if (!word.isEmpty() && Character.isUpperCase(word.charAt(0))) {
+                initials.append(word.charAt(0));
+            }
+            if (initials.length() == 2) {
+                break;
+            }
+        }
+        return initials.length() > 0 ? initials.toString() : name.substring(0, 1).toUpperCase();
+    }
 }

@@ -38,6 +38,12 @@ public class Provider extends User {
     @Column(name = "registration_date")
     private LocalDateTime registrationDate;
 
+    // En pantalla un prestador se muestra con el nombre de su emprendimiento
+    @Override
+    public String getDisplayName() {
+        return businessName;
+    }
+
     // Estos dos métodos no son columnas: sirven para mostrar el tipo y el documento en pantalla.
     // Cada subclase (FisicProvider y JuridicProvider) los sobrescribe.
     public String getTypeLabel() {

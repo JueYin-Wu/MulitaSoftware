@@ -1,7 +1,9 @@
 package uy.edu.um.porytic2026.validation;
 
-// Valida el formato de los documentos uruguayos usando su dígito verificador.
-// Así se rechaza una cédula o un RUT inventados aunque tengan la cantidad de números correcta.
+import uy.edu.um.porytic2026.entities.DocumentType;
+
+// Reglas de formato de los datos de los formularios: cédula (con dígito verificador), RUT,
+// teléfono, correo, nombres y contraseña. Las usan los registros y la recuperación de contraseña.
 public final class DocumentValidator {
 
     private DocumentValidator() {
@@ -52,5 +54,61 @@ public final class DocumentValidator {
     // Nombres: solo letras (con tildes y ñ), espacios, apóstrofo o guion
     public static boolean isValidName(String value) {
         return value != null && value.trim().matches("^[\\p{L}][\\p{L} '\\-]*$");
+    }
+
+    // Contraseña: al menos 8 caracteres, una mayúscula, una minúscula y un símbolo (!"·$%&/()=? etc.).
+    // Devuelve qué le falta, o null si cumple todo.
+    public static String passwordProblem(String value) {
+        if (value == null || value.length() < 8) {
+            return "La contraseña debe tener al menos 8 caracteres";
+        }
+        java.util.List<String> missing = new java.util.ArrayList<>();
+        if (!value.matches(".*\\p{Lu}.*")) {
+            missing.add("una mayúscula");
+        }
+        if (!value.matches(".*\\p{Ll}.*")) {
+            missing.add("una minúscula");
+        }
+        // Símbolo = cualquier carácter que no sea letra, número ni espacio
+        if (!value.matches(".*[^\\p{L}\\p{N}\\s].*")) {
+            missing.add("un símbolo, por ejemplo ! \" · $ % & / ( ) = ?");
+        }
+        if (missing.isEmpty()) {
+            return null;
+        }
+        return "A la contraseña le falta " + String.join(", ", missing);
+    }
+
+    // Pasaporte: el formato cambia según el país, así que se acepta entre 6 y 12 letras o números,
+    // con al menos un número. Se guarda en mayúsculas y sin espacios ni guiones.
+    public static String normalizePassport(String value) {
+        return value == null ? "" : value.replaceAll("[\\s-]", "").toUpperCase();
+    }
+
+    public static boolean isValidPassport(String value) {
+        String passport = normalizePassport(value);
+        return passport.matches("[A-Z0-9]{6,12}") && passport.matches(".*\\d.*");
+    }
+
+    // Documento de identidad según su tipo: devuelve qué está mal, o null si es válido
+    public static String documentProblem(DocumentType type, String value) {
+        boolean blank = value == null || value.isBlank();
+        if (type == DocumentType.PASSPORT) {
+            if (blank) {
+                return "Ingresá tu número de pasaporte";
+            }
+            return isValidPassport(value) ? null
+                    : "Pasaporte no válido. Debe tener entre 6 y 12 letras o números (ej: AB1234567)";
+        }
+        if (blank) {
+            return "Ingresá tu número de cédula";
+        }
+        return isValidCI(value) ? null
+                : "Cédula no válida. Revisá los números y el dígito verificador (ej: 1.234.567-2)";
+    }
+
+    // Deja el documento como se guarda en la base: la cédula solo con números, el pasaporte en mayúsculas
+    public static String normalizeDocument(DocumentType type, String value) {
+        return type == DocumentType.PASSPORT ? normalizePassport(value) : onlyDigits(value);
     }
 }

@@ -1,0 +1,6 @@
+<!-- Menú del panel de administración. Uso: th:replace="~{fragments/admin-nav :: nav('tags')}" -->
+<nav th:fragment="nav(active)" class="admin-nav" aria-label="Panel de administración">
+    <a th:href="@{/admin/providers}" th:classappend="${active == 'providers'} ? 'active'">Prestadores</a>
+    <a th:href="@{/admin/tags}" th:classappend="${active == 'tags'} ? 'active'">Tipos de actividad</a>
+    <a th:href="@{/admin/equipment}" th:classappend="${active == 'equipment'} ? 'active'">Equipamiento</a>
+</nav>

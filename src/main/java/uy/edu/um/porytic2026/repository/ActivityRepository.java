@@ -17,4 +17,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     List<Activity> findByNameContainingIgnoreCase(String name);
 
     List<Activity> findByNameContainingIgnoreCaseAndLocationDepartment(String name, String department);
+
+    // En cuántas actividades se usa un tipo de actividad (para no borrar uno que está en uso)
+    long countByTagsId(Long tagId);
 }

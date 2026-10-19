@@ -13,6 +13,7 @@ public class TouristRegistrationForm {
     private String lastName;
     private String email;
     private String phone;
+    private String documentType = "CI"; // "CI" (cédula) o "PASSPORT" (pasaporte)
     private String idDocument;
     private String password;
     private String confirmPassword;

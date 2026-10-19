@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Tipos de actividad')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container">
+        <div th:replace="~{fragments/admin-nav :: nav('tags')}"></div>
+
+        <div class="panel-title">
+            <h1>Tipos de actividad</h1>
+            <p>Categorías con las que los prestadores clasifican sus actividades y con las que los turistas las buscan.</p>
+        </div>
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+
+        <!-- Propuestas de prestadores (solo aparece si hay alguna) -->
+        <section class="catalog-block" th:unless="${#lists.isEmpty(pendingTags)}">
+            <h2>Propuestas de prestadores <span class="chip chip-amber" th:text="${#lists.size(pendingTags)}">1</span></h2>
+            <div class="catalog-row" th:each="tag : ${pendingTags}">
+                <div class="catalog-main">
+                    <strong th:text="${tag.name}">Nombre</strong>
+                    <span class="muted" th:if="${tag.proposedBy != null}"
+                          th:text="'Propuesto por ' + ${tag.proposedBy.businessName} + (${tag.proposalDate != null} ? ' el ' + ${#temporals.format(tag.proposalDate, 'dd/MM/yyyy')} : '')">Propuesto por</span>
+                </div>
+                <div class="catalog-actions">
+                    <form th:action="@{/admin/tags/{id}/approve(id=${tag.id})}" method="post">
+                        <button type="submit" class="btn btn-primary btn-sm">Aprobar</button>
+                    </form>
+                    <details class="reject-box">
+                        <summary class="btn btn-danger btn-sm">Rechazar</summary>
+                        <form th:action="@{/admin/tags/{id}/reject(id=${tag.id})}" method="post">
+                            <label class="hint" th:for="'reason-' + ${tag.id}">Motivo (opcional)</label>
+                            <textarea th:id="'reason-' + ${tag.id}" name="reason" maxlength="255"></textarea>
+                            <button type="submit" class="btn btn-danger btn-sm">Confirmar rechazo</button>
+                        </form>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alta -->
+        <section class="catalog-block">
+            <h2>Agregar tipo de actividad</h2>
+            <form th:action="@{/admin/tags}" method="post" class="catalog-form">
+                <div class="form-group">
+                    <label for="new-name">Nombre</label>
+                    <input type="text" id="new-name" name="name" th:value="${newName}" required minlength="2"
+                           th:maxlength="${maxName}" placeholder="Ej: Cabalgata">
+                </div>
+                <button type="submit" class="btn btn-primary">Agregar</button>
+            </form>
+        </section>
+
+        <!-- Consulta, modificación y baja -->
+        <section class="catalog-block">
+            <h2 th:text="'Tipos disponibles (' + ${#lists.size(tags)} + ')'">Tipos disponibles</h2>
+            <p class="muted" th:if="${#lists.isEmpty(tags)}">Todavía no hay tipos de actividad.</p>
+            <div class="catalog-row" th:each="tag : ${tags}" th:with="used=${usage.get(tag.id)}">
+                <div class="catalog-main">
+                    <strong th:text="${tag.name}">Nombre</strong>
+                    <span class="muted" th:text="${used == 0} ? 'Sin actividades' : (${used} + (${used == 1} ? ' actividad' : ' actividades'))">3 actividades</span>
+                </div>
+                <div class="catalog-actions">
+                    <details class="edit-box">
+                        <summary class="btn btn-outline btn-sm">Editar</summary>
+                        <form th:action="@{/admin/tags/{id}(id=${tag.id})}" method="post" class="catalog-form">
+                            <label class="hint" th:for="'name-' + ${tag.id}">Nombre</label>
+                            <input type="text" th:id="'name-' + ${tag.id}" name="name" th:value="${tag.name}"
+                                   required minlength="2" th:maxlength="${maxName}">
+                            <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+                        </form>
+                    </details>
+                    <form th:action="@{/admin/tags/{id}/delete(id=${tag.id})}" method="post" onsubmit="return confirm('¿Eliminar este tipo de actividad?')">
+                        <button type="submit" class="btn btn-danger btn-sm" th:disabled="${used > 0}"
+                                th:title="${used > 0} ? 'No se puede eliminar: hay actividades que lo usan' : 'Eliminar'">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

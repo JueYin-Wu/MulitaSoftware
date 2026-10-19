@@ -1,5 +1,6 @@
 package uy.edu.um.porytic2026.entities;
 
+import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -73,4 +74,44 @@ public class Activity {
 
     @OneToMany(mappedBy = "activity")
     private List<ActivityEquipment> equipmentItems;
+
+    // Fotos que elige el prestador para el carrusel de la página de la actividad, en orden
+    @ElementCollection
+    @CollectionTable(name = "activity_images", joinColumns = @JoinColumn(name = "activity_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "url")
+    @Builder.Default
+    private List<String> images = new ArrayList<>();
+
+    // Imágenes del carrusel. Si el prestador no cargó ninguna, se usa la foto de la tarjeta.
+    public List<String> getGallery() {
+        if (images != null && !images.isEmpty()) {
+            return images;
+        }
+        return imageUrl != null ? List.of(imageUrl) : List.of();
+    }
+
+    // Textos para mostrar los minutos de forma legible ("2 horas", "1 día")
+    public String getBookingDeadlineLabel() {
+        return formatMinutes(bookingDeadline);
+    }
+
+    public String getCancellationLabel() {
+        return formatMinutes(cancellationMinutes);
+    }
+
+    public static String formatMinutes(Integer minutes) {
+        if (minutes == null || minutes <= 0) {
+            return null;
+        }
+        if (minutes % 1440 == 0) {
+            int days = minutes / 1440;
+            return days + (days == 1 ? " día" : " días");
+        }
+        if (minutes % 60 == 0) {
+            int hours = minutes / 60;
+            return hours + (hours == 1 ? " hora" : " horas");
+        }
+        return minutes + " minutos";
+    }
 }

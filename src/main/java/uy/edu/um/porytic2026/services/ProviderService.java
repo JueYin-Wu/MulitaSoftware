@@ -4,6 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uy.edu.um.porytic2026.dto.ProviderRegistrationForm;
+import uy.edu.um.porytic2026.entities.DocumentType;
 import uy.edu.um.porytic2026.entities.FisicProvider;
 import uy.edu.um.porytic2026.entities.JuridicProvider;
 import uy.edu.um.porytic2026.entities.Provider;
@@ -52,15 +53,22 @@ public class ProviderService {
 
         Provider provider;
         if (form.isFisic()) {
-            String nationalId = DocumentValidator.onlyDigits(form.getNationalId());
-            if (!DocumentValidator.isValidCI(nationalId)) {
-                throw new RegistrationException("nationalId", "Cédula no válida");
+            DocumentType documentType = DocumentType.fromValue(form.getDocumentType());
+            if (documentType == null) {
+                throw new RegistrationException("documentType", "Elegí cédula o pasaporte");
             }
+            String problem = DocumentValidator.documentProblem(documentType, form.getNationalId());
+            if (problem != null) {
+                throw new RegistrationException("nationalId", problem);
+            }
+            String nationalId = DocumentValidator.normalizeDocument(documentType, form.getNationalId());
             // CU03 4b: "cédula ya registrada"
-            if (fisicProviderRepository.existsByNationalId(nationalId)) {
-                throw new RegistrationException("nationalId", "Cédula ya registrada");
+            if (fisicProviderRepository.existsByDocumentTypeAndNationalId(documentType, nationalId)) {
+                throw new RegistrationException("nationalId",
+                        documentType == DocumentType.CI ? "Cédula ya registrada" : "Pasaporte ya registrado");
             }
             FisicProvider fisic = new FisicProvider();
+            fisic.setDocumentType(documentType);
             fisic.setNationalId(nationalId);
             provider = fisic;
         } else {
@@ -99,6 +107,15 @@ public class ProviderService {
 
     public long countByStatus(ProviderStatus status) {
         return providerRepository.countByStatus(status);
+    }
+
+    // Prestador aprobado, para su página pública. Si no existe o no está aprobado, error.
+    public Provider findApprovedById(Long id) {
+        Provider provider = findById(id);
+        if (provider.getStatus() != ProviderStatus.APPROVED) {
+            throw new IllegalArgumentException("El prestador no está disponible");
+        }
+        return provider;
     }
 
     public Provider findById(Long id) {

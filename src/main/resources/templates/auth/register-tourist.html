@@ -45,9 +45,18 @@
                             <p class="field-error" th:if="${#fields.hasErrors('phone')}" th:text="${#fields.errors('phone')[0]}"></p>
                         </div>
                     </div>
+                    <!-- Documento de identidad: cédula uruguaya o pasaporte (document-type.js cambia el ejemplo según lo elegido) -->
                     <div class="form-group">
-                        <label for="idDocument">Cédula de identidad</label>
-                        <input type="text" id="idDocument" th:field="*{idDocument}" th:errorclass="is-invalid" placeholder="1.234.567-8">
+                        <label for="idDocument">Documento de identidad</label>
+                        <div class="doc-input">
+                            <select id="documentType" th:field="*{documentType}" aria-label="Tipo de documento" data-doc-input="idDocument">
+                                <option value="CI">Cédula</option>
+                                <option value="PASSPORT">Pasaporte</option>
+                            </select>
+                            <input type="text" id="idDocument" th:field="*{idDocument}" th:errorclass="is-invalid" placeholder="1.234.567-8">
+                        </div>
+                        <p class="hint" data-doc-hint="idDocument">Cédula uruguaya, con o sin puntos y guion.</p>
+                        <p class="field-error" th:if="${#fields.hasErrors('documentType')}" th:text="${#fields.errors('documentType')[0]}"></p>
                         <p class="field-error" th:if="${#fields.hasErrors('idDocument')}" th:text="${#fields.errors('idDocument')[0]}"></p>
                     </div>
                 </fieldset>
@@ -58,7 +67,6 @@
                         <div class="form-group">
                             <label for="password">Contraseña</label>
                             <input type="password" id="password" th:field="*{password}" th:errorclass="is-invalid" autocomplete="new-password">
-                            <p class="hint">Mínimo 8 caracteres.</p>
                             <p class="field-error" th:if="${#fields.hasErrors('password')}" th:text="${#fields.errors('password')[0]}"></p>
                         </div>
                         <div class="form-group">
@@ -66,6 +74,18 @@
                             <input type="password" id="confirmPassword" th:field="*{confirmPassword}" th:errorclass="is-invalid" autocomplete="new-password">
                             <p class="field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:text="${#fields.errors('confirmPassword')[0]}"></p>
                         </div>
+                    </div>
+                    <!-- Recuadro con el formato de la contraseña. password-rules.js marca cada regla en verde al cumplirse -->
+                    <div class="password-rules" id="password-rules">
+                        <p class="password-rules-title">Formato de la contraseña</p>
+                        <ul>
+                            <li data-rule="length">Tener al menos 8 caracteres</li>
+                            <li data-rule="upper">Tener al menos una mayúscula (A-Z)</li>
+                            <li data-rule="lower">Tener al menos una minúscula (a-z)</li>
+                            <li data-rule="symbol">Tener al menos un símbolo, por ejemplo ! " · $ % &amp; / ( ) = ?</li>
+                            <li data-rule="match">Escribirla igual en los dos campos</li>
+                        </ul>
+                        <p class="password-rules-tip">Recomendado: sumar algún número y no usar datos personales como el nombre o la cédula.</p>
                     </div>
                 </fieldset>
 
@@ -79,5 +99,8 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<script th:src="@{/js/document-type.js}"></script>
+<script th:src="@{/js/password-rules.js}"></script>
+<script th:src="@{/js/password-toggle.js}"></script>
 </body>
 </html>

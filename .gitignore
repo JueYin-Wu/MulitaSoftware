@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Fotos que suben los usuarios (no se suben a Git) ###
+uploads/

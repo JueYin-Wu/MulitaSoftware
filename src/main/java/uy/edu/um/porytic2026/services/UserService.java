@@ -2,6 +2,7 @@ package uy.edu.um.porytic2026.services;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import uy.edu.um.porytic2026.entities.DocumentType;
 import uy.edu.um.porytic2026.entities.Tourist;
 import uy.edu.um.porytic2026.entities.User;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,13 +38,19 @@ public class UserService {
             throw new RegistrationException("email", "Correo no válido: ya existe una cuenta con ese correo");
         }
 
-        String idDocument = DocumentValidator.onlyDigits(form.getIdDocument());
-        if (!DocumentValidator.isValidCI(idDocument)) {
-            throw new RegistrationException("idDocument", "Cédula no válida");
+        DocumentType documentType = DocumentType.fromValue(form.getDocumentType());
+        if (documentType == null) {
+            throw new RegistrationException("documentType", "Elegí cédula o pasaporte");
         }
+        String problem = DocumentValidator.documentProblem(documentType, form.getIdDocument());
+        if (problem != null) {
+            throw new RegistrationException("idDocument", problem);
+        }
+        String idDocument = DocumentValidator.normalizeDocument(documentType, form.getIdDocument());
         // CU03 4b: "cédula ya registrada"
-        if (touristRepository.existsByIdDocument(idDocument)) {
-            throw new RegistrationException("idDocument", "Cédula ya registrada");
+        if (touristRepository.existsByDocumentTypeAndIdDocument(documentType, idDocument)) {
+            throw new RegistrationException("idDocument",
+                    documentType == DocumentType.CI ? "Cédula ya registrada" : "Pasaporte ya registrado");
         }
 
         Tourist tourist = Tourist.builder()
@@ -53,6 +60,7 @@ public class UserService {
                 .username(generateUsername(form.getFirstName().trim(), form.getLastName().trim()))
                 .password(passwordEncoder.encode(form.getPassword())) // se guarda encriptada
                 .phone(DocumentValidator.onlyDigits(form.getPhone()))
+                .documentType(documentType)
                 .idDocument(idDocument)
                 .build();
 
@@ -77,4 +85,11 @@ public class UserService {
         }
         return username;
     }
-}
+
+    // Cambia (o quita, si newImageUrl es null) la foto de perfil y borra el archivo anterior
+    public User updateProfileImage(User user, String newImageUrl, FileStorageService storage) {
+        storage.delete(user.getProfileImageUrl());
+        user.setProfileImageUrl(newImageUrl);
+        return userRepository.save(user);
+    }
+}

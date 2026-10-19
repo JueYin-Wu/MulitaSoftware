@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import uy.edu.um.porytic2026.dto.ProviderRegistrationForm;
 import uy.edu.um.porytic2026.dto.TouristRegistrationForm;
+import uy.edu.um.porytic2026.entities.DocumentType;
 import uy.edu.um.porytic2026.entities.Tourist;
 import uy.edu.um.porytic2026.exceptions.RegistrationException;
 import uy.edu.um.porytic2026.services.AuthUserDetailsService;
@@ -70,11 +71,7 @@ public class AuthController {
 
         validatePersonalData(form.getFirstName(), form.getLastName(), form.getEmail(), form.getPhone(),
                 form.getPassword(), form.getConfirmPassword(), result);
-        if (isBlank(form.getIdDocument())) {
-            reject(result, "idDocument", "Ingresá tu cédula");
-        } else if (!DocumentValidator.isValidCI(form.getIdDocument())) {
-            reject(result, "idDocument", "Cédula no válida. Revisá los números y el dígito verificador (ej: 1.234.567-2)");
-        }
+        validateIdentityDocument(form.getDocumentType(), form.getIdDocument(), "idDocument", result);
 
         if (result.hasErrors()) {
             return "auth/register-tourist";
@@ -163,8 +160,9 @@ public class AuthController {
             reject(result, "phone", "Teléfono no válido. Ej: 099 123 456 (celular) o 2400 1234 (fijo)");
         }
 
-        if (isBlank(password) || password.length() < 8) {
-            reject(result, "password", "La contraseña debe tener al menos 8 caracteres");
+        String passwordProblem = DocumentValidator.passwordProblem(password);
+        if (passwordProblem != null) {
+            reject(result, "password", passwordProblem);
         }
         if (!Objects.equals(password, confirmPassword)) {
             reject(result, "confirmPassword", "Las contraseñas no coinciden");
@@ -174,11 +172,7 @@ public class AuthController {
     // Datos propios del prestador: documento según el tipo y datos del emprendimiento
     private void validateBusinessData(ProviderRegistrationForm form, BindingResult result) {
         if (form.isFisic()) {
-            if (isBlank(form.getNationalId())) {
-                reject(result, "nationalId", "Ingresá tu cédula");
-            } else if (!DocumentValidator.isValidCI(form.getNationalId())) {
-                reject(result, "nationalId", "Cédula no válida. Revisá los números y el dígito verificador (ej: 1.234.567-2)");
-            }
+            validateIdentityDocument(form.getDocumentType(), form.getNationalId(), "nationalId", result);
         } else if (form.isJuridic()) {
             if (isBlank(form.getTaxId())) {
                 reject(result, "taxId", "Ingresá el RUT de la empresa");
@@ -202,6 +196,19 @@ public class AuthController {
         }
         if (form.getServiceDescription() != null && form.getServiceDescription().length() > 255) {
             reject(result, "serviceDescription", "La descripción puede tener hasta 255 caracteres");
+        }
+    }
+
+    // Documento de identidad (turista y prestador persona física): cédula o pasaporte
+    private void validateIdentityDocument(String documentType, String number, String field, BindingResult result) {
+        DocumentType type = DocumentType.fromValue(documentType);
+        if (type == null) {
+            reject(result, "documentType", "Elegí cédula o pasaporte");
+            return;
+        }
+        String problem = DocumentValidator.documentProblem(type, number);
+        if (problem != null) {
+            reject(result, field, problem);
         }
     }
 

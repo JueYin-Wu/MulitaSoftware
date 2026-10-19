@@ -17,14 +17,15 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // Páginas públicas: cualquiera puede verlas sin iniciar sesión
-                        .requestMatchers("/", "/activities", "/login", "/register/**", "/error").permitAll()
+                        .requestMatchers("/", "/activities", "/activities/**", "/providers/**", "/tourists/**", "/login", "/register/**", "/forgot-password", "/reset-password", "/error").permitAll()
                         // Archivos estáticos (estilos, scripts, imágenes)
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                         // Consola de la base de datos H2 (solo para desarrollo)
                         .requestMatchers("/h2-console/**").permitAll()
                         // Cada portal solo para su rol
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/provider/**").hasRole("PROVIDER")
+                        .requestMatchers("/tourist/**").hasRole("TOURIST")
                         // Todo lo demás requiere haber iniciado sesión
                         .anyRequest().authenticated()
                 )

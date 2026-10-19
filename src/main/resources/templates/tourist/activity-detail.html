@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${activity.name})}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="detail-page">
+    <div class="container">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/activities}">Actividades</a>
+            <span aria-hidden="true">/</span>
+            <span th:text="${activity.name}">Actividad</span>
+        </nav>
+
+        <div class="detail-top">
+            <!-- Carrusel con las fotos que eligió el prestador (activity-gallery.js) -->
+            <section class="gallery" aria-label="Fotos de la actividad" data-gallery>
+                <div class="gallery-main">
+                    <img th:each="img, st : ${activity.gallery}" th:src="@{${img}}"
+                         th:alt="${activity.name} + ' - foto ' + ${st.count}"
+                         th:classappend="${st.first} ? 'active'" class="gallery-slide">
+                    <th:block th:if="${#lists.size(activity.gallery) > 1}">
+                        <button type="button" class="gallery-nav prev" aria-label="Foto anterior" data-gallery-prev>&#8249;</button>
+                        <button type="button" class="gallery-nav next" aria-label="Foto siguiente" data-gallery-next>&#8250;</button>
+                        <span class="gallery-counter" data-gallery-counter></span>
+                    </th:block>
+                </div>
+                <div class="gallery-thumbs" th:if="${#lists.size(activity.gallery) > 1}">
+                    <button type="button" th:each="img, st : ${activity.gallery}" class="gallery-thumb"
+                            th:classappend="${st.first} ? 'active'" th:attr="data-index=${st.index},aria-label='Ver foto ' + ${st.count}">
+                        <img th:src="@{${img}}" alt="">
+                    </button>
+                </div>
+            </section>
+
+            <!-- Resumen: nombre, prestador, valoración, precio y condiciones -->
+            <aside class="detail-summary">
+                <span class="chip chip-cyan" th:text="${activity.location?.department}">Departamento</span>
+                <h1 th:text="${activity.name}">Nombre de la actividad</h1>
+                <a class="detail-provider" th:href="@{/providers/{id}(id=${activity.provider.id})}">
+                    <span th:replace="~{fragments/avatar :: avatar(${activity.provider}, 'sm')}"></span>
+                    <span>Ofrecida por <strong th:text="${activity.provider.businessName}">Emprendimiento</strong></span>
+                </a>
+
+                <div class="rating" th:if="${averageRating != null}">
+                    <span class="stars" th:attr="aria-label='Valoración ' + ${#numbers.formatDecimal(averageRating, 1, 'POINT', 1, 'COMMA')} + ' de 5'">
+                        <span th:each="i : ${#numbers.sequence(1, 5)}" th:text="${i <= filledStars} ? '★' : '☆'">★</span>
+                    </span>
+                    <strong th:text="${#numbers.formatDecimal(averageRating, 1, 'POINT', 1, 'COMMA')}">4,5</strong>
+                    <span class="muted" th:text="'(' + ${#lists.size(reviews)} + (${#lists.size(reviews)} == 1 ? ' reseña)' : ' reseñas)')">(2 reseñas)</span>
+                </div>
+                <p class="muted" th:if="${averageRating == null}">Todavía no tiene reseñas.</p>
+
+                <div class="detail-price">
+                    <span th:text="'$ ' + ${#numbers.formatDecimal(activity.price, 1, 'POINT', 0, 'COMMA')}">$ 0</span>
+                    <small>por persona</small>
+                </div>
+
+                <ul class="facts">
+                    <li>
+                        <span class="fact-label">Edad mínima</span>
+                        <span th:text="${activity.minimumAge == null or activity.minimumAge == 0} ? 'Todas las edades' : ${activity.minimumAge} + ' años'">Edad</span>
+                    </li>
+                    <li>
+                        <span class="fact-label">Reservas</span>
+                        <span th:text="${activity.bookingDeadlineLabel != null} ? 'Hasta ' + ${activity.bookingDeadlineLabel} + ' antes del inicio' : 'Hasta la hora de inicio'">Plazo</span>
+                    </li>
+                    <li>
+                        <span class="fact-label">Cancelación</span>
+                        <span th:text="${activity.cancellationLabel != null} ? 'Hasta ' + ${activity.cancellationLabel} + ' antes del inicio' : 'No admite cancelación'">Cancelación</span>
+                    </li>
+                    <li>
+                        <span class="fact-label">Reembolso</span>
+                        <span th:text="${activity.refundable} ? 'Se devuelve el ' + ${activity.refundPercentage} + ' %' : 'Sin reembolso'">Reembolso</span>
+                    </li>
+                </ul>
+
+                <!-- La reserva todavía no está implementada: se invita a iniciar sesión o se avisa que viene pronto -->
+                <a th:unless="${loggedIn}" th:href="@{/login}" class="btn btn-primary btn-block btn-pill">Iniciá sesión para reservar</a>
+                <a th:if="${loggedIn}" href="#fechas" class="btn btn-primary btn-block btn-pill">Ver próximas fechas</a>
+                <p class="hint text-center" th:if="${loggedIn}">La reserva online va a estar disponible próximamente.</p>
+            </aside>
+        </div>
+
+        <div class="detail-body">
+            <div class="detail-main">
+                <section class="detail-section">
+                    <h2>Descripción</h2>
+                    <p th:text="${activity.description}">Descripción</p>
+                    <div class="tag-list" th:if="${activity.tags != null and !activity.tags.isEmpty()}">
+                        <th:block th:each="tag : ${activity.tags}">
+                            <span class="chip chip-green" th:if="${tag.status.name() == 'APPROVED'}" th:text="${tag.name}">Etiqueta</span>
+                        </th:block>
+                    </div>
+                </section>
+
+                <section class="detail-section" th:if="${activity.requirements != null and !activity.requirements.isBlank()}">
+                    <h2>Requisitos</h2>
+                    <p th:text="${activity.requirements}">Requisitos</p>
+                </section>
+
+                <section class="detail-section" th:if="${!requiredEquipment.isEmpty() or !providedEquipment.isEmpty()}">
+                    <h2>Equipamiento</h2>
+                    <div class="equipment-grid">
+                        <div th:if="${!requiredEquipment.isEmpty()}">
+                            <h3>Tenés que llevar</h3>
+                            <ul class="equipment-list">
+                                <li th:each="item : ${requiredEquipment}">
+                                    <strong th:text="${item.equipment.name}">Equipo</strong>
+                                    <span th:if="${item.equipment.description != null}" th:text="${item.equipment.description}">Detalle</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div th:if="${!providedEquipment.isEmpty()}">
+                            <h3>Lo da el prestador</h3>
+                            <ul class="equipment-list provided">
+                                <li th:each="item : ${providedEquipment}">
+                                    <strong th:text="${item.equipment.name}">Equipo</strong>
+                                    <span th:if="${item.equipment.description != null}" th:text="${item.equipment.description}">Detalle</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="detail-section" id="fechas">
+                    <h2>Próximas fechas</h2>
+                    <div class="table-wrap" th:unless="${#lists.isEmpty(slots)}">
+                        <table class="slots">
+                            <thead>
+                            <tr><th>Fecha</th><th>Hora</th><th>Lugares libres</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="slot : ${slots}">
+                                <td th:text="${slot.dateLabel}">Sábado 25 de octubre</td>
+                                <td th:text="${#temporals.format(slot.availability.time, 'HH:mm')} + ' h'">10:00 h</td>
+                                <td>
+                                    <span th:if="${slot.soldOut}" class="chip chip-danger">Sin lugares</span>
+                                    <span th:unless="${slot.soldOut}" th:text="${slot.remaining} + ' de ' + ${slot.availability.capacity}">15 de 15</span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="muted" th:if="${#lists.isEmpty(slots)}">Por ahora no hay fechas publicadas.</p>
+                </section>
+
+                <section class="detail-section">
+                    <h2>Reseñas</h2>
+                    <p class="muted" th:if="${#lists.isEmpty(reviews)}">Todavía nadie dejó una reseña de esta actividad.</p>
+                    <article class="review" th:each="review : ${reviews}">
+                        <div class="review-head">
+                            <a class="review-author" th:href="@{/tourists/{id}(id=${review.booking.tourist.id})}">
+                                <span th:replace="~{fragments/avatar :: avatar(${review.booking.tourist}, 'sm')}"></span>
+                                <strong th:text="${review.booking.tourist.firstName}">Nombre</strong>
+                            </a>
+                            <span class="stars small" th:attr="aria-label='Valoración ' + ${review.rating} + ' de 5'">
+                                <span th:each="i : ${#numbers.sequence(1, 5)}" th:text="${i <= review.rating} ? '★' : '☆'">★</span>
+                            </span>
+                            <span class="muted" th:text="${#temporals.format(review.booking.availability.date, 'dd/MM/yyyy')}">01/10/2026</span>
+                        </div>
+                        <p th:text="${review.comment}">Comentario</p>
+                    </article>
+                </section>
+            </div>
+
+            <aside class="detail-side">
+                <section class="detail-section" th:if="${activity.location != null}">
+                    <h2>Ubicación</h2>
+                    <!-- Mapa de Google Maps (modo "embed", no necesita clave de API) -->
+                    <div class="map-frame">
+                        <iframe th:src="@{https://www.google.com/maps(q=${activity.location.mapQuery},z=13,output='embed')}"
+                                th:title="'Mapa: ' + ${activity.name}" loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+                    </div>
+                    <p class="location-lines">
+                        <strong th:text="${activity.location.department}">Departamento</strong>
+                        <span th:text="${activity.location.neighborhood}">Barrio</span>
+                        <span th:text="${activity.location.street} + ' ' + ${activity.location.number}">Calle y número</span>
+                    </p>
+                    <a class="map-link" target="_blank" rel="noopener"
+                       th:href="@{https://www.google.com/maps/search/(api=1,query=${activity.location.mapQuery})}">Abrir en Google Maps ↗</a>
+                </section>
+            </aside>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/activity-gallery.js}"></script>
+</body>
+</html>

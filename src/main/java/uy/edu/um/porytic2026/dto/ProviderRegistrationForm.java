@@ -49,7 +49,8 @@ public class ProviderRegistrationForm {
     @Size(max = 255, message = "La descripción puede tener hasta 255 caracteres")
     private String serviceDescription;
 
-    // Solo persona física
+    // Solo persona física: tipo de documento ("CI" o "PASSPORT") y su número
+    private String documentType = "CI";
     private String nationalId;
 
     // Solo persona jurídica

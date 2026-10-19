@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Equipamiento')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container">
+        <div th:replace="~{fragments/admin-nav :: nav('equipment')}"></div>
+
+        <div class="panel-title">
+            <h1>Equipamiento</h1>
+            <p>Elementos que una actividad le pide llevar al turista o que el prestador le da (casco, chaleco, bicicleta...).</p>
+        </div>
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+
+        <!-- Alta -->
+        <section class="catalog-block">
+            <h2>Agregar equipamiento</h2>
+            <form th:action="@{/admin/equipment}" method="post" class="catalog-form">
+                <div class="form-group">
+                    <label for="new-name">Nombre</label>
+                    <input type="text" id="new-name" name="name" th:value="${newName}" required minlength="2"
+                           th:maxlength="${maxName}" placeholder="Ej: Equipo de buceo">
+                </div>
+                <div class="form-group grow">
+                    <label for="new-description">Descripción <span class="muted">(opcional)</span></label>
+                    <input type="text" id="new-description" name="description" th:value="${newDescription}"
+                           th:maxlength="${maxDescription}" placeholder="Ej: Máscara, snorkel y aletas">
+                </div>
+                <button type="submit" class="btn btn-primary">Agregar</button>
+            </form>
+        </section>
+
+        <!-- Consulta, modificación y baja -->
+        <section class="catalog-block">
+            <h2 th:text="'Equipamiento disponible (' + ${#lists.size(items)} + ')'">Equipamiento disponible</h2>
+            <p class="muted" th:if="${#lists.isEmpty(items)}">Todavía no hay equipamiento.</p>
+            <div class="catalog-row" th:each="item : ${items}" th:with="used=${usage.get(item.id)}">
+                <div class="catalog-main">
+                    <strong th:text="${item.name}">Nombre</strong>
+                    <span th:if="${item.description != null}" th:text="${item.description}">Descripción</span>
+                    <span class="muted" th:text="${used == 0} ? 'Sin actividades' : (${used} + (${used == 1} ? ' actividad' : ' actividades'))">2 actividades</span>
+                </div>
+                <div class="catalog-actions">
+                    <details class="edit-box">
+                        <summary class="btn btn-outline btn-sm">Editar</summary>
+                        <form th:action="@{/admin/equipment/{id}(id=${item.id})}" method="post" class="catalog-form">
+                            <label class="hint" th:for="'name-' + ${item.id}">Nombre</label>
+                            <input type="text" th:id="'name-' + ${item.id}" name="name" th:value="${item.name}"
+                                   required minlength="2" th:maxlength="${maxName}">
+                            <label class="hint" th:for="'desc-' + ${item.id}">Descripción</label>
+                            <input type="text" th:id="'desc-' + ${item.id}" name="description" th:value="${item.description}"
+                                   th:maxlength="${maxDescription}">
+                            <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+                        </form>
+                    </details>
+                    <form th:action="@{/admin/equipment/{id}/delete(id=${item.id})}" method="post" onsubmit="return confirm('¿Eliminar este equipamiento?')">
+                        <button type="submit" class="btn btn-danger btn-sm" th:disabled="${used > 0}"
+                                th:title="${used > 0} ? 'No se puede eliminar: hay actividades que lo usan' : 'Eliminar'">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

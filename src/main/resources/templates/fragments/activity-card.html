@@ -6,7 +6,8 @@
         <span class="chip chip-cyan" th:text="${activity.location?.department}">Departamento</span>
     </div>
     <div class="card-body">
-        <h3 th:text="${activity.name}">Nombre de actividad</h3>
+        <!-- El enlace cubre toda la tarjeta (clase stretched-link), así se puede hacer clic en cualquier parte -->
+        <h3><a th:href="@{/activities/{id}(id=${activity.id})}" class="stretched-link" th:text="${activity.name}">Nombre de actividad</a></h3>
         <p class="description" th:text="${activity.description}">Descripción</p>
         <div class="card-footer">
             <div class="price">

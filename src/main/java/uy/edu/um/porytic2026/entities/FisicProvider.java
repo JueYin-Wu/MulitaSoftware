@@ -6,7 +6,9 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "fisic_providers")
+@Table(name = "fisic_providers",
+        // No se puede repetir el mismo documento del mismo tipo
+        uniqueConstraints = @UniqueConstraint(columnNames = {"document_type", "national_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,7 +16,11 @@ import lombok.experimental.SuperBuilder;
 
 public class FisicProvider extends Provider {
 
-    @Column(name = "national_id", unique = true)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "document_type", nullable = false)
+    private DocumentType documentType;
+
+    @Column(name = "national_id")
     @NotBlank
     private String nationalId;
 
@@ -25,6 +31,6 @@ public class FisicProvider extends Provider {
 
     @Override
     public String getDocument() {
-        return "CI " + nationalId;
+        return (documentType == DocumentType.PASSPORT ? "Pasaporte " : "CI ") + nationalId;
     }
 }

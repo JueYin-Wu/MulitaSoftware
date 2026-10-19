@@ -1,0 +1,7 @@
+<!-- Foto de perfil de un usuario (turista o prestador). Si no subió una, se muestran sus iniciales.
+     Uso: <span th:replace="~{fragments/avatar :: avatar(${usuario}, 'lg')}"></span>  (tamaños: sm, md, lg) -->
+<span th:fragment="avatar(user, size)" class="avatar" th:classappend="'avatar-' + ${size}">
+    <img th:if="${user.profileImageUrl != null}" th:src="@{${user.profileImageUrl}}"
+         th:alt="'Foto de ' + ${user.displayName}">
+    <span th:unless="${user.profileImageUrl != null}" th:text="${user.initials}" aria-hidden="true">AE</span>
+</span>

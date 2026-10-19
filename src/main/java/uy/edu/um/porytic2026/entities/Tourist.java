@@ -6,7 +6,9 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "tourists")
+@Table(name = "tourists",
+        // No se puede repetir el mismo documento del mismo tipo
+        uniqueConstraints = @UniqueConstraint(columnNames = {"document_type", "id_document"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,7 +16,11 @@ import lombok.experimental.SuperBuilder;
 
 public class Tourist extends User {
 
-    @Column(name = "id_document", unique = true)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "document_type", nullable = false)
+    private DocumentType documentType;
+
+    @Column(name = "id_document")
     @NotBlank
     private String idDocument;
 }
