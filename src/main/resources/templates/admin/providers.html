@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Solicitudes de prestadores')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container">
+        <div class="panel-title">
+            <h1>Solicitudes de prestadores</h1>
+            <p>Revisá los registros nuevos y aprobá o rechazá cada uno.</p>
+        </div>
+
+        <!-- Mensajes que manda AdminController después de aprobar o rechazar -->
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+
+        <!-- Pestañas por estado -->
+        <nav class="tabs">
+            <a th:href="@{/admin/providers(status='PENDING')}" class="tab" th:classappend="${status.name() == 'PENDING'} ? 'active'">
+                Pendientes <span class="count" th:text="${pendingCount}">0</span>
+            </a>
+            <a th:href="@{/admin/providers(status='APPROVED')}" class="tab" th:classappend="${status.name() == 'APPROVED'} ? 'active'">
+                Aprobados <span class="count" th:text="${approvedCount}">0</span>
+            </a>
+            <a th:href="@{/admin/providers(status='REJECTED')}" class="tab" th:classappend="${status.name() == 'REJECTED'} ? 'active'">
+                Rechazados <span class="count" th:text="${rejectedCount}">0</span>
+            </a>
+        </nav>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(providers)}">
+            <h3 th:text="${status.name() == 'PENDING'} ? 'No hay solicitudes pendientes' : 'No hay prestadores en esta lista'">Sin solicitudes</h3>
+            <p th:if="${status.name() == 'PENDING'}">Cuando un prestador se registre, su solicitud va a aparecer acá.</p>
+        </div>
+
+        <div class="request-list">
+            <article class="request-card" th:each="p : ${providers}">
+                <div class="request-head">
+                    <div>
+                        <h3 th:text="${p.businessName}">Emprendimiento</h3>
+                        <span class="chip chip-cyan" th:text="${p.typeLabel}">Tipo</span>
+                        <span class="chip chip-amber" th:if="${status.name() == 'PENDING'}">Pendiente</span>
+                        <span class="chip chip-green" th:if="${status.name() == 'APPROVED'}">Aprobado</span>
+                        <span class="chip chip-danger" th:if="${status.name() == 'REJECTED'}">Rechazado</span>
+                    </div>
+                    <span class="request-date" th:if="${p.registrationDate != null}"
+                          th:text="'Registrado el ' + ${#temporals.format(p.registrationDate, 'dd/MM/yyyy HH:mm')}">Fecha</span>
+                </div>
+
+                <dl class="data-list">
+                    <div><dt>Titular</dt><dd th:text="${p.firstName} + ' ' + ${p.lastName}">Nombre</dd></div>
+                    <div><dt>Documento</dt><dd th:text="${p.document}">Documento</dd></div>
+                    <div th:if="${p.typeLabel == 'Persona jurídica'}"><dt>Responsable</dt><dd th:text="${p.legalRepresentative}">Responsable</dd></div>
+                    <div><dt>Correo</dt><dd th:text="${p.email}">Correo</dd></div>
+                    <div><dt>Teléfono</dt><dd th:text="${p.phone}">Teléfono</dd></div>
+                    <div><dt>Dirección</dt><dd th:text="${p.address}">Dirección</dd></div>
+                    <div class="full" th:if="${p.serviceDescription != null and !p.serviceDescription.isBlank()}">
+                        <dt>Descripción</dt><dd th:text="${p.serviceDescription}">Descripción</dd>
+                    </div>
+                    <div class="full" th:if="${p.rejectionReason != null}">
+                        <dt>Motivo del rechazo</dt><dd th:text="${p.rejectionReason}">Motivo</dd>
+                    </div>
+                </dl>
+
+                <!-- Acciones: solo para solicitudes pendientes -->
+                <div class="request-actions" th:if="${status.name() == 'PENDING'}">
+                    <form th:action="@{/admin/providers/{id}/approve(id=${p.id})}" method="post">
+                        <button type="submit" class="btn btn-primary btn-sm">Aprobar</button>
+                    </form>
+
+                    <details class="reject-box">
+                        <summary class="btn btn-danger btn-sm">Rechazar</summary>
+                        <form th:action="@{/admin/providers/{id}/reject(id=${p.id})}" method="post">
+                            <label class="hint" th:for="'reason-' + ${p.id}">Motivo del rechazo (opcional, se le informa al prestador)</label>
+                            <textarea th:id="'reason-' + ${p.id}" name="reason" maxlength="255"
+                                      placeholder="Ej: los datos del RUT no coinciden con el responsable"></textarea>
+                            <button type="submit" class="btn btn-danger btn-sm">Confirmar rechazo</button>
+                        </form>
+                    </details>
+                </div>
+            </article>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

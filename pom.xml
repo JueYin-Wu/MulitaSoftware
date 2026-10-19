@@ -30,12 +30,11 @@
 		<java.version>17</java.version>
 	</properties>
 	<dependencies>
-		<!-- Source: https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
+		<!-- Validaciones (@NotBlank, @Email, @Size...). El starter trae la API y además
+		     Hibernate Validator, que es el que realmente ejecuta las validaciones. -->
 		<dependency>
-			<groupId>jakarta.validation</groupId>
-			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.1.1</version>
-			<scope>compile</scope>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

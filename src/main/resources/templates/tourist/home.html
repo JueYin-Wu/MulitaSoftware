@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Inicio')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main>
+    <!-- Portada -->
+    <section class="hero">
+        <div class="container">
+            <h1>Descubrí <strong>Uruguay</strong> de una forma natural</h1>
+            <p class="lead">Descubre los paisajes auténticos del país más verde de Sudamérica. De las sierras a los esteros, del Atlántico a las termas.</p>
+        </div>
+    </section>
+
+    <!-- Presentación -->
+    <section class="intro">
+        <div class="container">
+            <blockquote>
+                <p>“Donde la brisa marina canta y el sol deja su firma.”</p>
+                <footer>— Carlos Páez Vilaró (Poema al Sol).</footer>
+            </blockquote>
+            <p class="intro-text">Un territorio pequeño con una biodiversidad extraordinaria. Playas desiertas, humedales de clase mundial, sierras de roca antigua y aguas termales naturales. Todo a menos de 4 horas de Montevideo. Uruguay Mnatural conecta viajeros con experiencias únicas guiadas por locales apasionados.</p>
+        </div>
+    </section>
+
+    <!-- Algunas actividades destacadas; el listado completo está en /activities -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <h2>Actividades destacadas</h2>
+                    <p>Una muestra de lo que podés hacer en todo el país.</p>
+                </div>
+                <a th:href="@{/activities}" class="btn btn-outline btn-pill btn-sm"
+                   th:text="'Ver todas las actividades (' + ${totalActivities} + ')'">Ver todas las actividades</a>
+            </div>
+
+            <div class="activity-grid" th:unless="${#lists.isEmpty(activities)}">
+                <th:block th:each="activity : ${activities}">
+                    <article th:replace="~{fragments/activity-card :: card(${activity})}"></article>
+                </th:block>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(activities)}">
+                <h3>Todavía no hay actividades publicadas</h3>
+            </div>
+        </div>
+    </section>
+
+    <!-- Invitación para prestadores -->
+    <section class="section" th:unless="${loggedIn}">
+        <div class="container">
+            <div class="cta-band">
+                <div>
+                    <h2>¿Tenés un emprendimiento turístico?</h2>
+                    <p>Registrate como prestador, persona física o jurídica. Cuando el equipo de Uruguay Mnatural apruebe tu solicitud, vas a poder publicar tus actividades.</p>
+                </div>
+                <a th:href="@{/register/provider}" class="btn btn-primary btn-pill">Registrarme como prestador</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

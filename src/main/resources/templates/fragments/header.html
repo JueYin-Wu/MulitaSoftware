@@ -1,0 +1,39 @@
+<!-- Header común. Los datos loggedIn, currentRole y currentUsername
+     los agrega GlobalModelAttributes en cada página. -->
+<div th:fragment="header">
+    <header class="site-header">
+        <div class="container header-inner">
+            <a th:href="@{/}" class="logo">
+                <img th:src="@{/images/logo-uruguay-mnatural.png}" alt="Uruguay Mnatural">
+            </a>
+
+            <nav class="main-nav">
+                <a th:href="@{/}">Inicio</a>
+                <a th:href="@{/activities}">Actividades</a>
+            </nav>
+
+            <!-- Buscador: manda ?q=... a la página de actividades (ActivityController) -->
+            <form th:action="@{/activities}" method="get" class="header-search" role="search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
+                </svg>
+                <input type="text" name="q" th:value="${q}" placeholder="Buscar actividades..." aria-label="Buscar actividades">
+            </form>
+
+            <div class="header-actions">
+                <!-- Visitante sin sesión -->
+                <a th:unless="${loggedIn}" th:href="@{/login}" class="btn btn-primary btn-pill btn-sm">Ingresar</a>
+
+                <!-- Usuario con sesión iniciada -->
+                <th:block th:if="${loggedIn}">
+                    <a th:if="${currentRole == 'ADMIN'}" th:href="@{/admin/providers}" class="nav-link">Panel de administración</a>
+                    <a th:if="${currentRole == 'PROVIDER'}" th:href="@{/provider}" class="nav-link">Mi portal</a>
+                    <span class="nav-user">Hola, <strong th:text="${currentUsername}">usuario</strong></span>
+                    <form th:action="@{/logout}" method="post" class="inline-form">
+                        <button type="submit" class="btn btn-outline btn-sm">Salir</button>
+                    </form>
+                </th:block>
+            </div>
+        </div>
+    </header>
+</div>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Mi portal')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container">
+        <div class="panel-title">
+            <h1 th:text="'Hola, ' + ${provider.firstName}">Hola</h1>
+            <p>Este es el portal de tu emprendimiento en Uruguay Mnatural.</p>
+        </div>
+
+        <div class="alert alert-success">Tu cuenta está aprobada. Ya podés gestionar tu emprendimiento.</div>
+
+        <div class="info-grid">
+            <section class="info-card">
+                <h2 th:text="${provider.businessName}">Emprendimiento</h2>
+                <span class="chip chip-cyan" th:text="${provider.typeLabel}">Tipo</span>
+                <dl class="data-list" style="margin-top: 16px;">
+                    <div><dt>Documento</dt><dd th:text="${provider.document}">Documento</dd></div>
+                    <div><dt>Correo</dt><dd th:text="${provider.email}">Correo</dd></div>
+                    <div><dt>Teléfono</dt><dd th:text="${provider.phone}">Teléfono</dd></div>
+                    <div><dt>Dirección</dt><dd th:text="${provider.address}">Dirección</dd></div>
+                    <div class="full" th:if="${provider.serviceDescription != null}">
+                        <dt>Descripción</dt><dd th:text="${provider.serviceDescription}">Descripción</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="info-card">
+                <h2>Próximamente</h2>
+                <ul>
+                    <li>Publicar actividades</li>
+                    <li>Calendarizar fechas, horarios y cupos</li>
+                    <li>Ver las reservas recibidas</li>
+                </ul>
+            </section>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

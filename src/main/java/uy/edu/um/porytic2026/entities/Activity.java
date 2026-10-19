@@ -48,6 +48,10 @@ public class Activity {
     @Column(name = "refund_percentage")
     private Integer refundPercentage;
 
+    // Ruta de la foto que se muestra en la tarjeta, por ejemplo "/images/sierras.jpg"
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Embedded
     private Location location;
 
@@ -65,4 +69,4 @@ public class Activity {
 
     @OneToMany(mappedBy = "activity")
     private List<ActivityEquipment> equipmentItems;
-}
+}

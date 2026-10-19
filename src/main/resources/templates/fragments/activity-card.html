@@ -1,0 +1,22 @@
+<!-- Tarjeta de una actividad. Se usa en el inicio y en la página de actividades:
+     <article th:replace="~{fragments/activity-card :: card(${activity})}"></article> -->
+<article class="activity-card" th:fragment="card(activity)">
+    <div class="card-image">
+        <img th:if="${activity.imageUrl != null}" th:src="@{${activity.imageUrl}}" th:alt="${activity.name}" loading="lazy">
+        <span class="chip chip-cyan" th:text="${activity.location?.department}">Departamento</span>
+    </div>
+    <div class="card-body">
+        <h3 th:text="${activity.name}">Nombre de actividad</h3>
+        <p class="description" th:text="${activity.description}">Descripción</p>
+        <div class="card-footer">
+            <div class="price">
+                <span th:text="'$ ' + ${#numbers.formatDecimal(activity.price, 1, 'POINT', 0, 'COMMA')}">$ 0</span>
+                <small>por persona</small>
+            </div>
+            <div class="card-meta">
+                <div th:text="${activity.minimumAge == null or activity.minimumAge == 0} ? 'Todas las edades' : 'Desde ' + ${activity.minimumAge} + ' años'">Edad</div>
+                <span th:if="${activity.refundable}" class="chip chip-green">Reembolsable</span>
+            </div>
+        </div>
+    </div>
+</article>

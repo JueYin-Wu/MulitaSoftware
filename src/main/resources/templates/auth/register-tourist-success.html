@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Cuenta creada')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="auth-page bg-atardecer">
+    <div class="container">
+        <div class="auth-card text-center">
+            <div class="success-icon">✓</div>
+            <h1>¡Bienvenido/a!</h1>
+            <p class="subtitle">
+                Tu cuenta de turista fue creada y ya iniciaste sesión
+                (tu usuario es <strong th:text="${currentUsername}">usuario</strong>).
+            </p>
+            <p class="hint">Te llevamos a la página de inicio en unos segundos...</p>
+            <a th:href="@{/}" class="btn btn-primary">Ir al inicio</a>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- CU03 paso 5: después de la pantalla de éxito se redirige al inicio, ya con la sesión iniciada -->
+<script>setTimeout(function () { window.location.href = "/"; }, 5000);</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Solicitud enviada')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="auth-page bg-atardecer">
+    <div class="container">
+        <div class="auth-card text-center">
+            <div class="success-icon">✓</div>
+            <h1>¡Solicitud enviada!</h1>
+            <p class="subtitle">
+                Recibimos el registro de <strong th:text="${businessName ?: 'tu emprendimiento'}">tu emprendimiento</strong>.
+                Un administrador de Uruguay Mnatural lo va a revisar. Cuando sea aprobado vas a poder iniciar sesión y publicar tus actividades.
+            </p>
+            <p class="hint">Te llevamos a la página de inicio en unos segundos...</p>
+            <a th:href="@{/}" class="btn btn-primary">Volver al inicio</a>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- CU01 paso 5: después de la pantalla de éxito se redirige al inicio -->
+<script>setTimeout(function () { window.location.href = "/"; }, 6000);</script>
+</body>
+</html>

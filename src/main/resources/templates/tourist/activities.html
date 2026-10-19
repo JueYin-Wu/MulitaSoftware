@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Actividades')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main>
+    <!-- Encabezado de la página -->
+    <section class="page-hero">
+        <div class="container">
+            <h1>Actividades</h1>
+            <p>Excursiones, paseos y experiencias de prestadores de todo el país.</p>
+        </div>
+    </section>
+
+    <section class="section activities-section">
+        <div class="container">
+            <!-- Filtros (RF05): mandan los datos por GET a /activities -->
+            <form th:action="@{/activities}" method="get" class="filters">
+                <div class="form-group">
+                    <label for="q">Buscar</label>
+                    <input type="text" id="q" name="q" th:value="${q}" placeholder="Ej: kayak, senderismo...">
+                </div>
+                <div class="form-group">
+                    <label for="department">Destino</label>
+                    <select id="department" name="department">
+                        <option value="">Todos los departamentos</option>
+                        <option th:each="d : ${departments}" th:value="${d}" th:text="${d}"
+                                th:selected="${d == department}">Departamento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="maxPrice">Precio máximo ($)</label>
+                    <input type="number" id="maxPrice" name="maxPrice" min="0" step="100"
+                           th:value="${maxPrice != null} ? ${maxPrice.intValue()} : ''" placeholder="Sin límite">
+                </div>
+                <div class="form-group">
+                    <label for="sort">Ordenar por</label>
+                    <select id="sort" name="sort">
+                        <option value="">Más recientes</option>
+                        <option value="price_asc" th:selected="${sort == 'price_asc'}">Precio: menor a mayor</option>
+                        <option value="price_desc" th:selected="${sort == 'price_desc'}">Precio: mayor a menor</option>
+                        <option value="name" th:selected="${sort == 'name'}">Nombre (A-Z)</option>
+                    </select>
+                </div>
+                <div class="filters-actions">
+                    <button type="submit" class="btn btn-primary">Aplicar</button>
+                    <a th:if="${hasFilters}" th:href="@{/activities}" class="btn btn-outline">Limpiar</a>
+                </div>
+            </form>
+
+            <p class="results-count"
+               th:text="${#lists.size(activities)} + (${#lists.size(activities)} == 1 ? ' actividad encontrada' : ' actividades encontradas')">0 actividades</p>
+
+            <div class="activity-grid" th:unless="${#lists.isEmpty(activities)}">
+                <th:block th:each="activity : ${activities}">
+                    <article th:replace="~{fragments/activity-card :: card(${activity})}"></article>
+                </th:block>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(activities)}">
+                <h3>No encontramos actividades</h3>
+                <p>Probá con otra palabra, otro destino o un precio más alto.</p>
+                <a th:href="@{/activities}" class="btn btn-outline btn-sm">Ver todas</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

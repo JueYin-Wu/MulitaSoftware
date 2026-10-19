@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Crear cuenta')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="auth-page bg-punta">
+    <div class="container">
+        <div class="auth-card wide">
+            <h1>Crear una cuenta</h1>
+            <p class="subtitle">¿Cómo querés usar Uruguay Mnatural?</p>
+
+            <!-- Turista y prestador son cuentas distintas (acta de la primera reunión) -->
+            <div class="choice-grid">
+                <a th:href="@{/register/tourist}" class="choice-card">
+                    <span class="choice-icon" aria-hidden="true">🧭</span>
+                    <strong>Soy turista</strong>
+                    <span>Quiero reservar actividades, pagarlas y dejar reseñas.</span>
+                    <span class="choice-cta">Registrarme como turista →</span>
+                </a>
+                <a th:href="@{/register/provider}" class="choice-card">
+                    <span class="choice-icon" aria-hidden="true">🏕️</span>
+                    <strong>Soy prestador</strong>
+                    <span>Tengo un emprendimiento turístico y quiero publicar mis actividades.</span>
+                    <span class="choice-cta">Registrarme como prestador →</span>
+                </a>
+            </div>
+
+            <p class="switch-link">¿Ya tenés cuenta? <a th:href="@{/login}">Iniciá sesión</a></p>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

@@ -17,4 +17,14 @@ public class FisicProvider extends Provider {
     @Column(name = "national_id", unique = true)
     @NotBlank
     private String nationalId;
+
+    @Override
+    public String getTypeLabel() {
+        return "Persona física";
+    }
+
+    @Override
+    public String getDocument() {
+        return "CI " + nationalId;
+    }
 }

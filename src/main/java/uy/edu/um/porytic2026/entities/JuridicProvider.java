@@ -21,4 +21,14 @@ public class JuridicProvider extends Provider {
     @Column(name = "legal_representative")
     @NotBlank
     private String legalRepresentative;
+
+    @Override
+    public String getTypeLabel() {
+        return "Persona jurídica";
+    }
+
+    @Override
+    public String getDocument() {
+        return "RUT " + taxId;
+    }
 }
