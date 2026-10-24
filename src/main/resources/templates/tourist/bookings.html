@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Mis reservas')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container narrow">
+        <div class="panel-title panel-title-actions">
+            <div>
+                <h1>Mis reservas</h1>
+                <p>Tus próximas actividades y las que ya pasaron.</p>
+            </div>
+            <a th:href="@{/activities}" class="btn btn-outline btn-sm">Buscar actividades</a>
+        </div>
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+
+        <section class="detail-section">
+            <h2>Próximas</h2>
+            <div class="empty-state" th:if="${#lists.isEmpty(upcoming)}">
+                <h3>No tenés reservas próximas</h3>
+                <p>Elegí una actividad y una fecha para reservar.</p>
+                <a th:href="@{/activities}" class="btn btn-primary btn-sm">Ver actividades</a>
+            </div>
+
+            <ul class="booking-list" th:unless="${#lists.isEmpty(upcoming)}">
+                <li class="booking-item booking-row" th:each="b : ${upcoming}">
+                    <img th:if="${b.availability.activity.imageUrl != null}" th:src="@{${b.availability.activity.imageUrl}}" alt="">
+                    <div class="booking-info">
+                        <a th:href="@{/activities/{id}(id=${b.availability.activity.id})}" th:text="${b.availability.activity.name}">Actividad</a>
+                        <span class="muted"
+                              th:text="${#temporals.format(b.availability.date, 'dd/MM/yyyy')} + ' · ' + ${#temporals.format(b.availability.time, 'HH:mm')} + ' h · ' + ${b.participantCount} + (${b.participantCount} == 1 ? ' persona' : ' personas') + ' · $ ' + ${#numbers.formatDecimal(b.totalPrice, 1, 'POINT', 0, 'COMMA')}">Detalle</span>
+                    </div>
+                    <span class="chip" th:classappend="${b.status.name() == 'CONFIRMED'} ? 'chip-green' : 'chip-orange'" th:text="${b.statusLabel}">Estado</span>
+
+                    <details class="reject-box cancel-box">
+                        <summary class="btn btn-danger btn-sm">Cancelar</summary>
+                        <form th:action="@{/tourist/bookings/{id}/cancel(id=${b.id})}" method="post">
+                            <p class="hint" th:if="${b.status.name() == 'CONFIRMED' and refundableNow.get(b.id)}"
+                               th:text="'Si cancelás ahora se te devuelve el ' + ${b.availability.activity.refundPercentage} + ' %.'">Reembolso</p>
+                            <p class="hint" th:if="${b.status.name() == 'CONFIRMED' and !refundableNow.get(b.id)}">
+                                Según la política de la actividad, si cancelás ahora no se devuelve el dinero.</p>
+                            <p class="hint" th:if="${b.status.name() == 'PENDING'}">Como todavía no pagaste, no hay nada que devolver.</p>
+                            <button type="submit" class="btn btn-danger btn-sm">Confirmar cancelación</button>
+                        </form>
+                    </details>
+                </li>
+            </ul>
+        </section>
+
+        <section class="detail-section" th:unless="${#lists.isEmpty(history)}">
+            <h2>Historial</h2>
+            <ul class="booking-list">
+                <li class="booking-item" th:each="b : ${history}">
+                    <img th:if="${b.availability.activity.imageUrl != null}" th:src="@{${b.availability.activity.imageUrl}}" alt="">
+                    <div class="booking-info">
+                        <a th:href="@{/activities/{id}(id=${b.availability.activity.id})}" th:text="${b.availability.activity.name}">Actividad</a>
+                        <span class="muted"
+                              th:text="${#temporals.format(b.availability.date, 'dd/MM/yyyy')} + ' · ' + ${b.participantCount} + (${b.participantCount} == 1 ? ' persona' : ' personas')">Detalle</span>
+                    </div>
+                    <span class="chip" th:classappend="${b.active} ? 'chip-cyan' : 'chip-muted'"
+                          th:text="${b.active} ? 'Realizada' : ${b.statusLabel}">Estado</span>
+                </li>
+            </ul>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

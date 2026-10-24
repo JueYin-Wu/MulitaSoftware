@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Reservar')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container narrow">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/activities}">Actividades</a>
+            <span aria-hidden="true">/</span>
+            <a th:href="@{/activities/{id}(id=${activity.id})}" th:text="${activity.name}">Actividad</a>
+            <span aria-hidden="true">/</span>
+            <span>Reservar</span>
+        </nav>
+
+        <div class="panel-title">
+            <h1>Reservar</h1>
+            <p>Revisá los datos y elegí cuántas personas van.</p>
+        </div>
+
+        <div class="booking-layout">
+            <!-- Resumen de la actividad y la fecha elegida -->
+            <section class="info-card booking-summary">
+                <img th:if="${activity.imageUrl != null}" th:src="@{${activity.imageUrl}}" th:alt="${activity.name}">
+                <h2 th:text="${activity.name}">Actividad</h2>
+                <p class="muted" th:text="${activity.provider.businessName} + ' · ' + ${activity.location?.department}">Prestador</p>
+                <ul class="facts">
+                    <li><span class="fact-label">Fecha</span>
+                        <span th:text="${#temporals.format(availability.date, 'dd/MM/yyyy')}">25/10/2026</span></li>
+                    <li><span class="fact-label">Hora</span>
+                        <span th:text="${#temporals.format(availability.time, 'HH:mm')} + ' h'">10:00 h</span></li>
+                    <li th:if="${activity.durationLabel != null}"><span class="fact-label">Duración</span>
+                        <span th:text="${activity.durationLabel}">2 h</span></li>
+                    <li><span class="fact-label">Lugares libres</span>
+                        <span th:text="${remaining}">10</span></li>
+                    <li><span class="fact-label">Edad mínima</span>
+                        <span th:text="${activity.minimumAge == null or activity.minimumAge == 0} ? 'Todas las edades' : ${activity.minimumAge} + ' años'">Edad</span></li>
+                    <li><span class="fact-label">Cancelación</span>
+                        <span th:text="${activity.refundable} ? 'Reembolso del ' + ${activity.refundPercentage} + ' % hasta ' + ${activity.cancellationLabel} + ' antes' : 'Sin reembolso'">Cancelación</span></li>
+                </ul>
+            </section>
+
+            <!-- Formulario: cantidad de participantes -->
+            <section class="info-card">
+                <form th:action="@{/tourist/bookings}" method="post" novalidate>
+                    <input type="hidden" name="availabilityId" th:value="${availability.id}">
+
+                    <div class="form-group">
+                        <label for="participantCount">Cantidad de participantes</label>
+                        <input type="number" id="participantCount" name="participantCount" min="1"
+                               th:max="${remaining}" th:value="${participantCount}"
+                               th:classappend="${participantError != null} ? 'is-invalid'"
+                               th:attr="data-price=${activity.price}">
+                        <p class="hint" th:text="${remaining == 1} ? 'Queda 1 lugar.' : 'Quedan ' + ${remaining} + ' lugares.'">Quedan lugares</p>
+                        <p class="field-error" th:if="${participantError != null}" th:text="${participantError}"></p>
+                    </div>
+
+                    <div class="booking-total">
+                        <span>Total</span>
+                        <strong id="booking-total"
+                                th:text="'$ ' + ${#numbers.formatDecimal(activity.price * participantCount, 1, 'POINT', 0, 'COMMA')}">$ 0</strong>
+                    </div>
+                    <p class="hint" th:text="'$ ' + ${#numbers.formatDecimal(activity.price, 1, 'POINT', 0, 'COMMA')} + ' por persona'">por persona</p>
+
+                    <p class="alert alert-info">La reserva queda <strong>pendiente de pago</strong> y te guarda los lugares.</p>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-pill">Confirmar reserva</button>
+                    <p class="switch-link text-center"><a th:href="@{/activities/{id}(id=${activity.id})}">← Volver a la actividad</a></p>
+                </form>
+            </section>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/booking.js}"></script>
+</body>
+</html>

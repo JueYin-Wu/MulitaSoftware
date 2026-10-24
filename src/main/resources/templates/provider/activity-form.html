@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Nueva actividad')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container narrow">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/provider}">Mi portal</a>
+            <span aria-hidden="true">/</span>
+            <a th:href="@{/provider/activities}">Mis actividades</a>
+            <span aria-hidden="true">/</span>
+            <span>Nueva actividad</span>
+        </nav>
+        <div class="panel-title">
+            <h1>Nueva actividad</h1>
+            <p>Completá los datos que van a ver los turistas en el portal.</p>
+        </div>
+
+        <!-- multipart porque lleva fotos. El token de seguridad va en la dirección para que funcione con archivos -->
+        <form th:action="@{/provider/activities/new(${_csrf.parameterName}=${_csrf.token})}" th:object="${form}"
+              method="post" enctype="multipart/form-data" novalidate>
+
+            <div class="alert alert-error" th:if="${formError}" th:text="${formError}">Error</div>
+            <div class="alert alert-error" th:if="${#fields.hasErrors('*') or photosError != null}">
+                Hay datos que no son válidos. Revisá los campos marcados en rojo y volvé a elegir las fotos.
+            </div>
+
+            <fieldset>
+                <legend>La experiencia</legend>
+                <div class="form-group">
+                    <label for="name">Nombre de la actividad</label>
+                    <input type="text" id="name" th:field="*{name}" th:errorclass="is-invalid" maxlength="100"
+                           placeholder="Ej: Cabalgata al atardecer en la Quebrada">
+                    <p class="field-error" th:if="${#fields.hasErrors('name')}" th:text="${#fields.errors('name')[0]}"></p>
+                </div>
+                <div class="form-group">
+                    <label for="description">Descripción</label>
+                    <textarea id="description" th:field="*{description}" th:errorclass="is-invalid" maxlength="1000" rows="5"
+                              placeholder="Qué se hace, qué se recorre, qué incluye..."></textarea>
+                    <p class="field-error" th:if="${#fields.hasErrors('description')}" th:text="${#fields.errors('description')[0]}"></p>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="price">Precio por persona ($)</label>
+                        <input type="number" id="price" th:field="*{price}" th:errorclass="is-invalid" min="0" step="1" placeholder="Ej: 1500">
+                        <p class="field-error" th:if="${#fields.hasErrors('price')}" th:text="${#fields.errors('price')[0]}"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="durationMinutes">Duración aproximada (minutos)</label>
+                        <input type="number" id="durationMinutes" th:field="*{durationMinutes}" th:errorclass="is-invalid"
+                               min="10" max="1440" step="5" placeholder="Ej: 150">
+                        <p class="hint">Ej: 90 = 1 h 30 min.</p>
+                        <p class="field-error" th:if="${#fields.hasErrors('durationMinutes')}" th:text="${#fields.errors('durationMinutes')[0]}"></p>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Fotos</legend>
+                <div class="form-group">
+                    <label for="photos">Fotos de la actividad (opcional)</label>
+                    <input type="file" id="photos" name="photos" multiple accept="image/jpeg,image/png,image/webp"
+                           th:classappend="${photosError != null} ? 'is-invalid'" th:attr="data-max=${maxPhotos}">
+                    <p class="hint" th:text="'Hasta ' + ${maxPhotos} + ' fotos JPG, PNG o WEBP de 2 MB cada una. La primera es la de la tarjeta.'">Hasta 5 fotos</p>
+                    <p class="field-error" id="photos-error" th:text="${photosError}" th:hidden="${photosError == null}"></p>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Tipo de actividad</legend>
+                <p class="hint" th:if="${#lists.isEmpty(tags)}">Todavía no hay tipos de actividad cargados por el administrador.</p>
+                <div class="check-grid">
+                    <label class="check-item" th:each="tag : ${tags}">
+                        <input type="checkbox" th:field="*{tagIds}" th:value="${tag.id}">
+                        <span th:text="${tag.name}">Tipo</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="proposedTag">¿No encontrás el tipo? Proponé uno nuevo (opcional)</label>
+                    <input type="text" id="proposedTag" th:field="*{proposedTag}" th:errorclass="is-invalid" maxlength="50"
+                           placeholder="Ej: Avistaje de aves">
+                    <p class="hint">Lo revisa el administrador. Se muestra en tu actividad cuando lo aprueba.</p>
+                    <p class="field-error" th:if="${#fields.hasErrors('proposedTag')}" th:text="${#fields.errors('proposedTag')[0]}"></p>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Ubicación</legend>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department">Departamento</label>
+                        <select id="department" th:field="*{department}" th:errorclass="is-invalid">
+                            <option value="">Elegí un departamento</option>
+                            <option th:each="d : ${departments}" th:value="${d}" th:text="${d}">Departamento</option>
+                        </select>
+                        <p class="field-error" th:if="${#fields.hasErrors('department')}" th:text="${#fields.errors('department')[0]}"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="neighborhood">Localidad o barrio</label>
+                        <input type="text" id="neighborhood" th:field="*{neighborhood}" th:errorclass="is-invalid" maxlength="100"
+                               placeholder="Ej: La Paloma">
+                        <p class="field-error" th:if="${#fields.hasErrors('neighborhood')}" th:text="${#fields.errors('neighborhood')[0]}"></p>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="street">Calle o ruta (opcional)</label>
+                        <input type="text" id="street" th:field="*{street}" th:errorclass="is-invalid" maxlength="100" placeholder="Ej: Ruta 10">
+                        <p class="field-error" th:if="${#fields.hasErrors('street')}" th:text="${#fields.errors('street')[0]}"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="number">Número o km (opcional)</label>
+                        <input type="text" id="number" th:field="*{number}" th:errorclass="is-invalid" maxlength="20" placeholder="Ej: km 236">
+                        <p class="field-error" th:if="${#fields.hasErrors('number')}" th:text="${#fields.errors('number')[0]}"></p>
+                    </div>
+                </div>
+                <p class="hint">Con estos datos se ubica el punto de encuentro en el mapa de la actividad.</p>
+            </fieldset>
+
+            <fieldset>
+                <legend>Requisitos y equipamiento</legend>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="minimumAge">Edad mínima</label>
+                        <input type="number" id="minimumAge" th:field="*{minimumAge}" th:errorclass="is-invalid" min="0" max="99"
+                               placeholder="Vacío = todas las edades">
+                        <p class="field-error" th:if="${#fields.hasErrors('minimumAge')}" th:text="${#fields.errors('minimumAge')[0]}"></p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="requirements">Otros requisitos (opcional)</label>
+                    <textarea id="requirements" th:field="*{requirements}" th:errorclass="is-invalid" maxlength="500" rows="3"
+                              placeholder="Ej: saber nadar, buen estado físico..."></textarea>
+                    <p class="field-error" th:if="${#fields.hasErrors('requirements')}" th:text="${#fields.errors('requirements')[0]}"></p>
+                </div>
+
+                <p class="hint" th:if="${#lists.isEmpty(equipmentList)}">Todavía no hay equipamiento cargado por el administrador.</p>
+                <div class="form-row" th:unless="${#lists.isEmpty(equipmentList)}">
+                    <div class="form-group">
+                        <label>Lo da el prestador</label>
+                        <div class="check-list">
+                            <label class="check-item" th:each="equipment : ${equipmentList}">
+                                <input type="checkbox" th:field="*{providedEquipmentIds}" th:value="${equipment.id}">
+                                <span th:text="${equipment.name}">Equipo</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Lo tiene que llevar el turista</label>
+                        <div class="check-list">
+                            <label class="check-item" th:each="equipment : ${equipmentList}">
+                                <input type="checkbox" th:field="*{requiredEquipmentIds}" th:value="${equipment.id}">
+                                <span th:text="${equipment.name}">Equipo</span>
+                            </label>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('requiredEquipmentIds')}" th:text="${#fields.errors('requiredEquipmentIds')[0]}"></p>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Reservas y cancelación</legend>
+                <div class="form-group">
+                    <label for="bookingDeadline">Se puede reservar hasta (minutos antes del inicio)</label>
+                    <input type="number" id="bookingDeadline" th:field="*{bookingDeadline}" th:errorclass="is-invalid" min="0" step="5">
+                    <p class="hint">Con 0 se puede reservar hasta la hora de inicio. Ej: 120 = hasta 2 horas antes.</p>
+                    <p class="field-error" th:if="${#fields.hasErrors('bookingDeadline')}" th:text="${#fields.errors('bookingDeadline')[0]}"></p>
+                </div>
+
+                <label class="check-item check-switch">
+                    <input type="checkbox" th:field="*{refundable}" data-toggle="refund-fields">
+                    <span>Se devuelve dinero si el turista cancela</span>
+                </label>
+
+                <div class="form-row" id="refund-fields">
+                    <div class="form-group">
+                        <label for="cancellationMinutes">Cancelación con reembolso hasta (minutos antes)</label>
+                        <input type="number" id="cancellationMinutes" th:field="*{cancellationMinutes}" th:errorclass="is-invalid"
+                               min="0" step="5" placeholder="Ej: 1440 = 24 horas">
+                        <p class="field-error" th:if="${#fields.hasErrors('cancellationMinutes')}" th:text="${#fields.errors('cancellationMinutes')[0]}"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="refundPercentage">Porcentaje que se devuelve (%)</label>
+                        <input type="number" id="refundPercentage" th:field="*{refundPercentage}" th:errorclass="is-invalid" min="0" max="100">
+                        <p class="field-error" th:if="${#fields.hasErrors('refundPercentage')}" th:text="${#fields.errors('refundPercentage')[0]}"></p>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="form-actions">
+                <a th:href="@{/provider/activities}" class="btn btn-outline">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Publicar actividad</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/provider-activity.js}"></script>
+</body>
+</html>

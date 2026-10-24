@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Mis actividades')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/provider}">Mi portal</a>
+            <span aria-hidden="true">/</span>
+            <span>Mis actividades</span>
+        </nav>
+        <div class="panel-title panel-title-actions">
+            <div>
+                <h1>Mis actividades</h1>
+                <p>Las actividades que publicás se muestran en el portal de turistas.</p>
+            </div>
+            <a th:href="@{/provider/activities/new}" class="btn btn-primary">+ Nueva actividad</a>
+        </div>
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(activities)}">
+            <h3>Todavía no publicaste actividades</h3>
+            <p>Creá tu primera actividad para que los turistas la encuentren.</p>
+            <a th:href="@{/provider/activities/new}" class="btn btn-primary btn-sm">Crear actividad</a>
+        </div>
+
+        <div class="request-list">
+            <article class="request-card provider-activity" th:each="a : ${activities}">
+                <img class="provider-activity-image" th:if="${a.imageUrl != null}" th:src="@{${a.imageUrl}}" th:alt="${a.name}">
+                <div class="provider-activity-body">
+                    <div class="request-head">
+                        <div>
+                            <h3 th:text="${a.name}">Actividad</h3>
+                            <span class="chip chip-cyan" th:text="${a.location?.department}">Departamento</span>
+                            <th:block th:each="tag : ${a.tags}">
+                                <span class="chip chip-green" th:if="${tag.status.name() == 'APPROVED'}" th:text="${tag.name}">Tipo</span>
+                                <span class="chip chip-amber" th:if="${tag.status.name() == 'PENDING'}"
+                                      th:text="${tag.name} + ' (en revisión)'">Tipo propuesto</span>
+                            </th:block>
+                        </div>
+                    </div>
+
+                    <dl class="data-list">
+                        <div><dt>Precio</dt><dd th:text="'$ ' + ${#numbers.formatDecimal(a.price, 1, 'POINT', 0, 'COMMA')}">$ 0</dd></div>
+                        <div><dt>Duración</dt><dd th:text="${a.durationLabel != null} ? ${a.durationLabel} : 'Sin indicar'">Duración</dd></div>
+                        <div><dt>Localidad</dt><dd th:text="${a.location?.neighborhood}">Localidad</dd></div>
+                        <div><dt>Edad mínima</dt><dd th:text="${a.minimumAge == null or a.minimumAge == 0} ? 'Todas las edades' : ${a.minimumAge} + ' años'">Edad</dd></div>
+                    </dl>
+
+                    <div class="request-actions">
+                        <a th:href="@{/activities/{id}(id=${a.id})}" class="btn btn-outline btn-sm">Ver como turista</a>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>
