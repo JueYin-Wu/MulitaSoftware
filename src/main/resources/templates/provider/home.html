@@ -53,12 +53,13 @@
             </section>
 
             <section class="info-card">
-                <h2>Próximamente</h2>
-                <ul>
-                    <li>Publicar actividades</li>
-                    <li>Calendarizar fechas, horarios y cupos</li>
-                    <li>Ver las reservas recibidas</li>
-                </ul>
+                <h2>Mis actividades</h2>
+                <p class="muted" th:text="${activityCount == 1} ? 'Tenés 1 actividad publicada.' : 'Tenés ' + ${activityCount} + ' actividades publicadas.'">Actividades</p>
+                <div class="stack-actions">
+                    <a th:href="@{/provider/activities/new}" class="btn btn-primary btn-block">+ Nueva actividad</a>
+                    <a th:href="@{/provider/activities}" class="btn btn-outline btn-block">Ver mis actividades</a>
+                </div>
+                <p class="hint">Próximamente: fechas y cupos, y las reservas recibidas.</p>
             </section>
         </div>
     </div>

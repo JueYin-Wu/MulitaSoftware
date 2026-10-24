@@ -40,7 +40,7 @@
 
         <!-- Próximas reservas: solo las ve el propio turista -->
         <section class="detail-section profile-block" th:if="${isOwner}">
-            <h2>Mis próximas reservas</h2>
+            <h2>Mis próximas reservas <a th:href="@{/tourist/bookings}" class="btn btn-outline btn-sm">Ver todas</a></h2>
             <p class="muted" th:if="${#lists.isEmpty(upcomingBookings)}">No tenés reservas próximas.</p>
             <ul class="booking-list" th:unless="${#lists.isEmpty(upcomingBookings)}">
                 <li class="booking-item" th:each="booking : ${upcomingBookings}">

@@ -13,6 +13,7 @@ import uy.edu.um.porytic2026.entities.Provider;
 import uy.edu.um.porytic2026.services.FileStorageService;
 import uy.edu.um.porytic2026.services.ProviderService;
 import uy.edu.um.porytic2026.services.UserService;
+import uy.edu.um.porytic2026.services.ProviderActivityService;
 
 // Portal del proveedor. Solo entra el rol PROVIDER (proveedores aprobados).
 @Controller
@@ -22,17 +23,22 @@ public class ProviderController {
     private final UserService userService;
     private final ProviderService providerService;
     private final FileStorageService fileStorageService;
+    private final ProviderActivityService providerActivityService;
 
     public ProviderController(UserService userService, ProviderService providerService,
-                              FileStorageService fileStorageService) {
+                              FileStorageService fileStorageService,
+                              ProviderActivityService providerActivityService) {
         this.userService = userService;
         this.providerService = providerService;
         this.fileStorageService = fileStorageService;
+        this.providerActivityService = providerActivityService;
     }
 
     @GetMapping
     public String home(Authentication authentication, Model model) {
-        model.addAttribute("provider", currentProvider(authentication));
+        Provider provider = currentProvider(authentication);
+        model.addAttribute("provider", provider);
+        model.addAttribute("activityCount", providerActivityService.findByProvider(provider).size());
         return "provider/home";
     }
 

@@ -967,6 +967,66 @@ legend {
 }
 .site-footer p { margin: 0; }
 
+/* ---------- Portal del prestador: mis actividades y nueva actividad ---------- */
+
+.container.narrow { max-width: 860px; }
+
+.panel-title-actions { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+.check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.check-list { display: grid; gap: 6px; }
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 400 !important;
+    margin: 0 !important;
+}
+.check-item input { width: 17px; height: 17px; accent-color: var(--green); margin: 0; }
+.check-item:has(input:checked) { border-color: var(--green); background: rgba(0, 194, 136, 0.08); }
+.check-switch { margin-bottom: 16px !important; }
+
+input[type="file"].is-invalid { border: 1px solid var(--danger); border-radius: 10px; padding: 6px; }
+
+.provider-activity { display: flex; gap: 20px; }
+.provider-activity-image { width: 160px; height: 120px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+.provider-activity-body { flex: 1; min-width: 0; }
+.provider-activity .chip { margin-right: 4px; }
+
+.stack-actions { display: grid; gap: 8px; margin: 14px 0 12px; }
+
+@media (max-width: 720px) {
+    .provider-activity { flex-direction: column; }
+    .provider-activity-image { width: 100%; height: 160px; }
+    .form-actions { flex-direction: column-reverse; }
+}
+
+/* ---------- Reservas del turista ---------- */
+
+.booking-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
+.booking-summary img { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 14px; }
+.booking-summary h2 { margin-bottom: 2px; }
+.booking-summary .facts { margin-top: 14px; margin-bottom: 0; }
+.booking-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--border); }
+.booking-total strong { font-family: var(--font-title); font-size: 28px; color: var(--amber); }
+.booking-row { flex-wrap: wrap; }
+.cancel-box { flex: 0 0 auto; min-width: 0; }
+.cancel-box[open] { flex-basis: 100%; }
+.slot-action { text-align: right; white-space: nowrap; }
+.detail-section h2 .btn { margin-left: 8px; vertical-align: middle; }
+
+@media (max-width: 720px) {
+    .booking-layout { grid-template-columns: 1fr; }
+}
+
 /* ---------- Celulares ---------- */
 
 @media (max-width: 960px) {

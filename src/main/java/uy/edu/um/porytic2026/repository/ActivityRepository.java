@@ -13,6 +13,9 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
 
     List<Activity> findByProviderId(Long providerId);
 
+    // Actividades de un prestador para su portal, ordenadas por nombre
+    List<Activity> findByProviderIdOrderByNameAsc(Long providerId);
+
     // Búsquedas para el buscador de la página de inicio
     List<Activity> findByNameContainingIgnoreCase(String name);
 

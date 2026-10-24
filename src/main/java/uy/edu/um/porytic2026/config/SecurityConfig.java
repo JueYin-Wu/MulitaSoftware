@@ -8,12 +8,17 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Guarda la página que alguien quiso abrir sin sesión (por ejemplo "Reservar") para volver después del login
+        RequestCache requestCache = new HttpSessionRequestCache();
         http
                 .authorizeHttpRequests(auth -> auth
                         // Páginas públicas: cualquiera puede verlas sin iniciar sesión
@@ -40,6 +45,12 @@ public class SecurityConfig {
                                 } else if (authority.getAuthority().equals("ROLE_PROVIDER")) {
                                     target = "/provider";
                                 }
+                            }
+                            // Un turista que quiso reservar sin sesión vuelve a la página donde estaba
+                            SavedRequest savedRequest = requestCache.getRequest(request, response);
+                            if (target.equals("/") && savedRequest != null) {
+                                response.sendRedirect(savedRequest.getRedirectUrl());
+                                return;
                             }
                             response.sendRedirect(request.getContextPath() + target);
                         })

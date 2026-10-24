@@ -58,6 +58,10 @@
                 </div>
 
                 <ul class="facts">
+                    <li th:if="${activity.durationLabel != null}">
+                        <span class="fact-label">Duración</span>
+                        <span th:text="${activity.durationLabel}">2 h</span>
+                    </li>
                     <li>
                         <span class="fact-label">Edad mínima</span>
                         <span th:text="${activity.minimumAge == null or activity.minimumAge == 0} ? 'Todas las edades' : ${activity.minimumAge} + ' años'">Edad</span>
@@ -76,10 +80,9 @@
                     </li>
                 </ul>
 
-                <!-- La reserva todavía no está implementada: se invita a iniciar sesión o se avisa que viene pronto -->
-                <a th:unless="${loggedIn}" th:href="@{/login}" class="btn btn-primary btn-block btn-pill">Iniciá sesión para reservar</a>
-                <a th:if="${loggedIn}" href="#fechas" class="btn btn-primary btn-block btn-pill">Ver próximas fechas</a>
-                <p class="hint text-center" th:if="${loggedIn}">La reserva online va a estar disponible próximamente.</p>
+                <!-- Para reservar se elige una fecha en la tabla de "Próximas fechas" -->
+                <a href="#fechas" class="btn btn-primary btn-block btn-pill">Elegir fecha y reservar</a>
+                <p class="hint text-center" th:unless="${loggedIn}">Para reservar vas a necesitar una cuenta de turista.</p>
             </aside>
         </div>
 
@@ -126,10 +129,12 @@
 
                 <section class="detail-section" id="fechas">
                     <h2>Próximas fechas</h2>
+                    <!-- Error al intentar reservar (por ejemplo, se llenó el cupo) -->
+                    <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
                     <div class="table-wrap" th:unless="${#lists.isEmpty(slots)}">
                         <table class="slots">
                             <thead>
-                            <tr><th>Fecha</th><th>Hora</th><th>Lugares libres</th></tr>
+                            <tr><th>Fecha</th><th>Hora</th><th>Lugares libres</th><th></th></tr>
                             </thead>
                             <tbody>
                             <tr th:each="slot : ${slots}">
@@ -138,6 +143,14 @@
                                 <td>
                                     <span th:if="${slot.soldOut}" class="chip chip-danger">Sin lugares</span>
                                     <span th:unless="${slot.soldOut}" th:text="${slot.remaining} + ' de ' + ${slot.availability.capacity}">15 de 15</span>
+                                </td>
+                                <td class="slot-action">
+                                    <!-- Solo turistas (o visitantes, que pasan por el login). Prestadores y admins no reservan. -->
+                                    <th:block th:if="${!slot.soldOut and slot.bookingOpen and (!loggedIn or currentRole == 'TOURIST')}">
+                                        <a th:href="@{/tourist/bookings/new(availabilityId=${slot.availability.id})}"
+                                           class="btn btn-primary btn-sm">Reservar</a>
+                                    </th:block>
+                                    <span th:if="${!slot.soldOut and !slot.bookingOpen}" class="muted">Reservas cerradas</span>
                                 </td>
                             </tr>
                             </tbody>

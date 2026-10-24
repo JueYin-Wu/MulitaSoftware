@@ -3,6 +3,7 @@ package uy.edu.um.porytic2026.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import uy.edu.um.porytic2026.entities.Availability;
+import java.time.LocalDateTime;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -20,6 +21,11 @@ public class AvailabilitySlot {
 
     public boolean isSoldOut() {
         return remaining <= 0;
+    }
+
+    // ¿Todavía se puede reservar? (no pasó el plazo que fijó el prestador antes del inicio)
+    public boolean isBookingOpen() {
+        return LocalDateTime.now().isBefore(availability.getBookingClosesAt());
     }
 
     // Fecha en español, por ejemplo "Sábado 25 de octubre"

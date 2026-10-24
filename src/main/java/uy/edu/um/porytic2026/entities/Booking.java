@@ -38,4 +38,31 @@ public class Booking {
     @ManyToOne
     @JoinColumn(name = "availability_id", nullable = false)
     private Availability availability;
+
+    // Precio total: precio por persona de la actividad por la cantidad de participantes
+    public Double getTotalPrice() {
+        if (availability == null || availability.getActivity() == null
+                || availability.getActivity().getPrice() == null || participantCount == null) {
+            return null;
+        }
+        return availability.getActivity().getPrice() * participantCount;
+    }
+
+    // Texto del estado para mostrar en pantalla
+    public String getStatusLabel() {
+        if (status == null) {
+            return "";
+        }
+        return switch (status) {
+            case PENDING -> "Pendiente de pago";
+            case CONFIRMED -> "Confirmada";
+            case CANCELLED -> "Cancelada";
+            case EXPIRED -> "Vencida";
+        };
+    }
+
+    // Reserva que todavía ocupa lugar (no fue cancelada ni venció)
+    public boolean isActive() {
+        return status == BookingStatus.PENDING || status == BookingStatus.CONFIRMED;
+    }
 }

@@ -24,15 +24,20 @@ public class Activity {
     @NotBlank
     private String name;
 
-    @Column(name = "description")
+    @Column(name = "description", length = 1000)
     private String description;
 
     @Column(name = "price")
     @PositiveOrZero
     private Double price;
 
-    @Column(name = "requirements")
+    @Column(name = "requirements", length = 500)
     private String requirements;
+
+    // Duración aproximada de la experiencia, en minutos (ej: 150 = 2 h 30 min)
+    @Column(name = "duration_minutes")
+    @Positive
+    private Integer durationMinutes;
 
     @Column(name = "minimum_age")
     @PositiveOrZero
@@ -98,6 +103,19 @@ public class Activity {
 
     public String getCancellationLabel() {
         return formatMinutes(cancellationMinutes);
+    }
+
+    // Duración para mostrar en pantalla ("2 h 30 min"), o null si no se indicó
+    public String getDurationLabel() {
+        if (durationMinutes == null || durationMinutes <= 0) {
+            return null;
+        }
+        int hours = durationMinutes / 60;
+        int minutes = durationMinutes % 60;
+        if (hours == 0) {
+            return minutes + " min";
+        }
+        return minutes == 0 ? hours + " h" : hours + " h " + minutes + " min";
     }
 
     public static String formatMinutes(Integer minutes) {

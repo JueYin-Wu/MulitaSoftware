@@ -21,4 +21,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     // Todas las reservas de un turista
     List<Booking> findByTouristId(Long touristId);
+
+    // ¿El turista ya tiene una reserva vigente para esa fecha? (para no reservar dos veces lo mismo)
+    boolean existsByTouristIdAndAvailabilityIdAndStatusIn(Long touristId, Long availabilityId,
+                                                          Collection<BookingStatus> statuses);
 }
