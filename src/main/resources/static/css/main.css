@@ -109,7 +109,7 @@ img { max-width: 100%; display: block; }
     align-items: center;
     gap: 28px;
     min-height: 72px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .logo {
@@ -173,12 +173,77 @@ img { max-width: 100%; display: block; }
 
 .btn-pill { border-radius: 999px; padding: 10px 24px; }
 
-.nav-user {
-    color: var(--muted);
+/* ---------- Botón y menú del usuario (header) ---------- */
+.user-menu { position: relative; }
+.user-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 12px 4px 4px;
+    border-radius: 999px;
+    background: var(--cyan);
+    color: #0e1f18;
+    font-weight: 600;
     font-size: 14px;
-    padding: 0 4px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: filter 0.15s;
 }
-.nav-user strong { color: var(--text); font-weight: 500; }
+.user-button::-webkit-details-marker { display: none; }
+.user-button:hover { filter: brightness(1.08); }
+.user-button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    background: var(--bg);
+    color: var(--cyan);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-name { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-caret { width: 15px; height: 15px; transition: transform 0.15s; }
+.user-menu[open] .user-caret { transform: rotate(180deg); }
+
+.user-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    min-width: 240px;
+    padding: 8px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+}
+.user-dropdown-head { display: flex; flex-direction: column; padding: 8px 10px 10px; margin-bottom: 6px; border-bottom: 1px solid var(--border); }
+.user-dropdown-head span { color: var(--muted); font-size: 13px; }
+.user-dropdown a, .user-logout {
+    display: block;
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+.user-dropdown a:hover, .user-logout:hover { background: var(--surface-2); text-decoration: none; }
+.user-dropdown form { margin: 6px 0 0; padding-top: 6px; border-top: 1px solid var(--border); }
+.user-logout { color: var(--danger); }
 
 .inline-form { display: inline; margin: 0; }
 
@@ -278,7 +343,7 @@ img { max-width: 100%; display: block; }
 
 .filters {
     display: grid;
-    grid-template-columns: 2fr 1.4fr 1fr 1.3fr auto;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 14px;
     align-items: end;
     padding: 18px;
@@ -493,10 +558,144 @@ a.detail-provider:hover { text-decoration: none; background: var(--surface-2); c
 .edit-box[open] .catalog-form { flex-direction: column; align-items: stretch; margin-top: 10px; min-width: 260px; }
 .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
 
+/* Formulario de reserva: datos de los acompañantes */
+.companions { margin: 8px 0 18px; }
+.companions h3 { font-size: 17px; margin-bottom: 2px; }
+.companion { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px 2px; margin: 12px 0 0; min-width: 0; }
+.companion legend { padding: 0 6px; font-weight: 600; color: var(--cyan); }
+.companion[hidden], .companions[hidden] { display: none; }
+.small { font-size: 13px; }
+
+/* ---------- Inicio: buscador, tipos de actividad, cómo funciona ---------- */
+.home-search-wrap { position: relative; z-index: 2; margin-top: -48px; padding-bottom: 40px; }
+.home-search {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr) auto;
+    gap: 6px;
+    align-items: stretch;
+    padding: 8px;
+    border-radius: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+.home-search-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 16px;
+    border-radius: 14px;
+    transition: background 0.15s;
+}
+.home-search-field:hover, .home-search-field:focus-within { background: var(--surface-2); }
+.home-search-field + .home-search-field { border-left: 1px solid var(--border); }
+.home-search-field label { font-size: 12px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--cyan); }
+.home-search .home-search-field select, .home-search .home-search-field input {
+    background: transparent;
+    border: 0;
+    padding: 4px 0;
+    color: var(--text);
+    font-size: 15px;
+    box-shadow: none;
+}
+.home-search .home-search-field select:focus, .home-search .home-search-field input:focus { outline: none; box-shadow: none; }
+.home-search-field select option { background: var(--surface); }
+.home-search .home-search-field input[type="date"] { min-height: 0; padding: 4px 0; background: transparent; border: 0; }
+.home-search-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0 28px; }
+.home-search-btn svg { width: 18px; height: 18px; }
+
+/* Menos espacio entre "Explorá por tipo" y "Destacadas" */
+.section-tight { padding-bottom: 0; }
+.section-tight + .section { padding-top: 40px; }
+
+.category-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.category-card {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    color: var(--text);
+    isolation: isolate;
+}
+.category-card img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+    transition: transform 0.4s;
+}
+.category-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, rgba(14, 14, 18, 0) 40%, rgba(14, 14, 18, 0.88) 100%);
+}
+.category-card:hover { text-decoration: none; }
+.category-card:hover img { transform: scale(1.06); }
+.category-card-text { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+.category-card-text h3 { font-size: 19px; margin: 0 0 2px; color: #fff; }
+.category-card-text span { font-size: 13px; color: var(--cyan); font-weight: 600; }
+@media (max-width: 1000px) { .category-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .category-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.how-it-works { background: var(--surface-alt); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.step { padding: 26px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+.step-number {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    color: #0e1f18;
+    font-family: var(--font-title);
+    font-weight: 700;
+    font-size: 18px;
+}
+.step h3 { font-size: 19px; margin: 0 0 6px; }
+.step p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+.cta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.cta-grid .cta-band { flex-direction: column; align-items: flex-start; justify-content: space-between; }
+
+@media (max-width: 860px) {
+    .home-search { grid-template-columns: 1fr; }
+    .home-search-field + .home-search-field { border-left: 0; border-top: 1px solid var(--border); }
+    .home-search-btn { justify-content: center; padding: 12px; }
+    .steps, .cta-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- Campo de fecha (calendario) ---------- */
+/* Misma letra y colores que el resto de los campos, calendario en tema oscuro e ícono celeste */
+input[type="date"] {
+    color-scheme: dark;
+    font-family: inherit;
+    cursor: pointer;
+    min-height: 46px;
+}
+input[type="date"]::-webkit-datetime-edit { padding: 0; }
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.9;
+    /* convierte el ícono del calendario al celeste de la página */
+    filter: invert(76%) sepia(34%) saturate(640%) hue-rotate(140deg) brightness(95%);
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+/* Sin fecha elegida, el "dd/mm/aaaa" se ve apagado, como el texto de ejemplo de los otros campos
+   (la clase is-empty la pone date-input.js) */
+input[type="date"].is-empty { color: #8a8894; }
+
 /* ---------- Formularios ---------- */
 
 input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input[type="number"],
-select, textarea {
+input[type="date"], select, textarea {
     width: 100%;
     padding: 12px 14px;
     background: var(--surface-2);
@@ -1037,6 +1236,7 @@ input[type="file"].is-invalid { border: 1px solid var(--danger); border-radius: 
 @media (max-width: 860px) {
     .main-nav { margin-left: 0; }
     .header-inner { gap: 12px; padding-top: 10px; padding-bottom: 10px; }
+    .header-inner { flex-wrap: wrap; }
     .header-search { order: 5; width: 100%; }
     .intro .container { grid-template-columns: 1fr; gap: 28px; }
 }
@@ -1045,6 +1245,8 @@ input[type="file"].is-invalid { border: 1px solid var(--danger); border-radius: 
     .hero { min-height: 0; padding: 64px 0 56px; }
     .filters { grid-template-columns: 1fr; }
     .logo img { height: 28px; }
+    .user-name { display: none; }
+    .user-button { padding-right: 8px; gap: 6px; }
     .form-row, .type-switch, .info-grid, .choice-grid { grid-template-columns: 1fr; }
     .auth-card { padding: 24px 20px; }
     .cta-band { padding: 24px; }

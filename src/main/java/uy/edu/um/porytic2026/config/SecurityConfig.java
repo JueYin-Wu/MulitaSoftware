@@ -24,7 +24,7 @@ public class SecurityConfig {
                         // Páginas públicas: cualquiera puede verlas sin iniciar sesión
                         .requestMatchers("/", "/activities", "/activities/**", "/providers/**", "/tourists/**", "/login", "/register/**", "/forgot-password", "/reset-password", "/error").permitAll()
                         // Archivos estáticos (estilos, scripts, imágenes)
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                         // Consola de la base de datos H2 (solo para desarrollo)
                         .requestMatchers("/h2-console/**").permitAll()
                         // Cada portal solo para su rol

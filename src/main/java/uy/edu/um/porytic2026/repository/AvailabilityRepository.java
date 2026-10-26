@@ -18,6 +18,9 @@ public interface AvailabilityRepository extends JpaRepository<Availability, Long
     // Próximas fechas de una actividad (desde hoy), ordenadas por fecha y hora
     List<Availability> findByActivityIdAndDateGreaterThanEqualOrderByDateAscTimeAsc(Long activityId, LocalDate from);
 
+    // Todas las fechas de un día, por hora (API: actividades de un día)
+    List<Availability> findByDateOrderByTimeAsc(LocalDate date);
+
     // Busca la fecha y la bloquea hasta que termine la transacción (SELECT ... FOR UPDATE).
     // Así, si dos turistas reservan los últimos lugares al mismo tiempo, el segundo espera
     // a que el primero termine y ve el cupo actualizado: no se venden más lugares de los que hay.

@@ -57,6 +57,34 @@
                         <p class="field-error" th:if="${participantError != null}" th:text="${participantError}"></p>
                     </div>
 
+                    <!-- Datos de los acompañantes: uno por cada persona además del turista.
+                         Se muestran solo los que hacen falta según la cantidad (booking.js). -->
+                    <div class="companions" id="companions" th:hidden="${participantCount <= 1}">
+                        <h3>Acompañantes</h3>
+                        <p class="hint">Vos ya contás como el primer participante. Completá los datos de las demás personas.</p>
+                        <div class="alert alert-error" th:if="${formError != null}" th:text="${formError}">Error</div>
+
+                        <fieldset class="companion" th:each="c, st : ${bookingForm.companions}"
+                                  th:with="base='companions[' + ${st.index} + ']', show=${st.index < participantCount - 1}"
+                                  th:hidden="${!show}" th:disabled="${!show}">
+                            <legend th:text="'Persona ' + ${st.index + 2}">Persona 2</legend>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label th:for="${base} + '-firstName'">Nombre</label>
+                                    <input type="text" th:id="${base} + '-firstName'" th:name="${base} + '.firstName'" th:value="${c.firstName}"
+                                           th:classappend="${companionErrors != null and companionErrors.get(base + '.firstName') != null} ? 'is-invalid'" maxlength="30">
+                                    <p class="field-error" th:if="${companionErrors != null and companionErrors.get(base + '.firstName') != null}" th:text="${companionErrors.get(base + '.firstName')}"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label th:for="${base} + '-lastName'">Apellido</label>
+                                    <input type="text" th:id="${base} + '-lastName'" th:name="${base} + '.lastName'" th:value="${c.lastName}"
+                                           th:classappend="${companionErrors != null and companionErrors.get(base + '.lastName') != null} ? 'is-invalid'" maxlength="30">
+                                    <p class="field-error" th:if="${companionErrors != null and companionErrors.get(base + '.lastName') != null}" th:text="${companionErrors.get(base + '.lastName')}"></p>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+
                     <div class="booking-total">
                         <span>Total</span>
                         <strong id="booking-total"

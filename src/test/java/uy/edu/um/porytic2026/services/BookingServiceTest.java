@@ -5,12 +5,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uy.edu.um.porytic2026.dto.ParticipantForm;
 import uy.edu.um.porytic2026.entities.*;
 import uy.edu.um.porytic2026.exceptions.BusinessException;
 import uy.edu.um.porytic2026.repository.AvailabilityRepository;
 import uy.edu.um.porytic2026.repository.BookingRepository;
 
 import java.time.*;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -68,7 +70,8 @@ class BookingServiceTest {
         when(bookingRepository.countParticipants(eq(50L), anyCollection())).thenReturn(3L);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Booking booking = bookingService.create(tourist, 50L, 2);
+        Booking booking = bookingService.create(tourist, 50L, 2,
+                List.of(new ParticipantForm("Ana", "Pérez")));
 
         assertEquals(BookingStatus.PENDING, booking.getStatus());
         assertEquals(2, booking.getParticipantCount());
@@ -76,6 +79,33 @@ class BookingServiceTest {
         assertSame(availability, booking.getAvailability());
         assertEquals(NOW, booking.getBookingDate());
         assertEquals(2000.0, booking.getTotalPrice());
+
+        // Se guarda el acompañante
+        assertEquals(1, booking.getParticipants().size());
+        Participant companion = booking.getParticipants().get(0);
+        assertEquals("Ana", companion.getFirstName());
+        assertEquals("Pérez", companion.getLastName());
+        assertSame(booking, companion.getBooking());
+    }
+
+    @Test
+    void createForTwoWithoutCompanionDataIsRejected() {
+        when(availabilityRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(availability));
+        when(bookingRepository.countParticipants(eq(50L), anyCollection())).thenReturn(0L);
+
+        BusinessException e = assertThrows(BusinessException.class,
+                () -> bookingService.create(tourist, 50L, 2, List.of()));
+        assertEquals("companions", e.getField());
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void companionWithInvalidDataGetsAnErrorPerField() {
+        var errors = bookingService.validateCompanions(tourist, 2,
+                List.of(new ParticipantForm("Ana3", "")));
+
+        assertTrue(errors.containsKey("companions[0].firstName"));
+        assertTrue(errors.containsKey("companions[0].lastName"));
     }
 
     @Test

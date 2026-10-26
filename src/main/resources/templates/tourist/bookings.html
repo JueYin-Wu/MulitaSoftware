@@ -33,6 +33,8 @@
                         <a th:href="@{/activities/{id}(id=${b.availability.activity.id})}" th:text="${b.availability.activity.name}">Actividad</a>
                         <span class="muted"
                               th:text="${#temporals.format(b.availability.date, 'dd/MM/yyyy')} + ' · ' + ${#temporals.format(b.availability.time, 'HH:mm')} + ' h · ' + ${b.participantCount} + (${b.participantCount} == 1 ? ' persona' : ' personas') + ' · $ ' + ${#numbers.formatDecimal(b.totalPrice, 1, 'POINT', 0, 'COMMA')}">Detalle</span>
+                        <span class="muted small" th:unless="${#lists.isEmpty(b.participants)}"
+                              th:text="'Con: ' + ${#strings.listJoin(b.participants.![firstName + ' ' + lastName], ', ')}">Con: Ana Pérez</span>
                     </div>
                     <span class="chip" th:classappend="${b.status.name() == 'CONFIRMED'} ? 'chip-green' : 'chip-orange'" th:text="${b.statusLabel}">Estado</span>
 

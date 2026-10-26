@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import uy.edu.um.porytic2026.entities.*;
 import uy.edu.um.porytic2026.repository.*;
 
+import java.util.Map;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -43,8 +44,20 @@ public class DataLoader implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // Foto de portada de cada tipo de actividad (static/images/categories)
+    private static final Map<String, String> TAG_IMAGES = Map.of(
+            "Naturaleza", "/images/categories/naturaleza.jpg",
+            "Actividad acuática", "/images/categories/actividad-acuatica.jpg",
+            "Recorrido histórico", "/images/categories/recorrido-historico.jpg",
+            "Senderismo", "/images/categories/senderismo.jpg",
+            "Cultural", "/images/categories/cultural.jpg",
+            "Aventura", "/images/categories/aventura-sierras.jpg");
+
     @Override
     public void run(String... args) {
+        // Se hace en cada arranque: así los tipos que ya estaban guardados en la base también reciben su foto
+        assignTagImages();
+
         if (userRepository.count() > 0) {
             return; // si ya hay datos, no carga de nuevo
         }
@@ -59,11 +72,11 @@ public class DataLoader implements CommandLineRunner {
                 .build();
         userRepository.save(admin);
 
-        // Proveedor ya aprobado, dueño de las actividades de ejemplo
+        // Proveedor ya aprobado, dueño de las actividades de ejemplo (usuario: prestador / contraseña: prestador1234)
         FisicProvider martin = FisicProvider.builder()
                 .firstName("Martín")
                 .lastName("Rodríguez")
-                .username("martin.rodriguez")
+                .username("prestador")
                 .email("martin@ejemplo.com")
                 .password(passwordEncoder.encode("prestador1234"))
                 .phone("099123456")
@@ -110,13 +123,13 @@ public class DataLoader implements CommandLineRunner {
                 .registrationDate(LocalDateTime.now().minusHours(5))
                 .build());
 
-        // Turista de prueba, con reservas pasadas y reseñas (usuario: sofia.gomez / contraseña: Turista1234!)
+        // Turista de prueba, con reservas pasadas y reseñas (usuario: turista / contraseña: turista1234)
         Tourist sofia = Tourist.builder()
                 .firstName("Sofía")
                 .lastName("Gómez")
-                .username("sofia.gomez")
+                .username("turista")
                 .email("sofia@ejemplo.com")
-                .password(passwordEncoder.encode("Turista1234!"))
+                .password(passwordEncoder.encode("turista1234"))
                 .phone("091234567")
                 .documentType(DocumentType.CI)
                 .idDocument("34567894")
@@ -215,7 +228,23 @@ public class DataLoader implements CommandLineRunner {
                 .name(name)
                 .status(TagStatus.APPROVED)
                 .proposalDate(LocalDateTime.now().minusDays(30))
+                .imageUrl(TAG_IMAGES.get(name))
                 .build());
+    }
+
+    // A cada tipo de actividad se le pone la foto que le corresponde (si hay una para ese nombre).
+    // Se actualiza si no tiene foto o si tiene otra de las fotos de ejemplo (/images/categories/...);
+    // si el administrador subió una propia, no se toca.
+    private void assignTagImages() {
+        for (Tag tag : tagRepository.findAll()) {
+            String image = TAG_IMAGES.get(tag.getName());
+            String current = tag.getImageUrl();
+            boolean isDefault = current == null || current.startsWith("/images/categories/");
+            if (image != null && isDefault && !image.equals(current)) {
+                tag.setImageUrl(image);
+                tagRepository.save(tag);
+            }
+        }
     }
 
     private Equipment saveEquipment(String name, String description) {

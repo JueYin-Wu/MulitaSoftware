@@ -2,18 +2,23 @@ package uy.edu.um.porytic2026.services;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uy.edu.um.porytic2026.dto.ParticipantForm;
 import uy.edu.um.porytic2026.entities.Availability;
 import uy.edu.um.porytic2026.entities.Booking;
 import uy.edu.um.porytic2026.entities.BookingStatus;
+import uy.edu.um.porytic2026.entities.Participant;
 import uy.edu.um.porytic2026.entities.Tourist;
 import uy.edu.um.porytic2026.exceptions.BusinessException;
 import uy.edu.um.porytic2026.repository.AvailabilityRepository;
 import uy.edu.um.porytic2026.repository.BookingRepository;
+import uy.edu.um.porytic2026.validation.DocumentValidator;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 // Reservas de los turistas: crear una reserva para una fecha de una actividad, consultarlas y cancelarlas.
 @Service
@@ -58,9 +63,17 @@ public class BookingService {
                 .orElse(null);
     }
 
-    // Crea la reserva. Queda PENDING (pendiente de pago) y ya ocupa los lugares en el cupo.
+    // Reserva para una sola persona (el propio turista), sin acompañantes
     @Transactional
     public Booking create(Tourist tourist, Long availabilityId, Integer participantCount) {
+        return create(tourist, availabilityId, participantCount, List.of());
+    }
+
+    // Crea la reserva. Queda PENDING (pendiente de pago) y ya ocupa los lugares en el cupo.
+    // Si van más personas, companions trae los datos de cada acompañante (participantCount - 1).
+    @Transactional
+    public Booking create(Tourist tourist, Long availabilityId, Integer participantCount,
+                          List<ParticipantForm> companions) {
         // Se bloquea la fecha mientras se reserva, para que dos reservas al mismo tiempo no superen el cupo
         Availability availability = availabilityRepository.findByIdForUpdate(availabilityId)
                 .orElseThrow(() -> new BusinessException("La fecha elegida no existe"));
@@ -84,13 +97,48 @@ public class BookingService {
             throw new BusinessException("Ya tenés una reserva para esa fecha. La podés ver en \"Mis reservas\".");
         }
 
-        return bookingRepository.save(Booking.builder()
+        // Los datos de los acompañantes son obligatorios y tienen que ser válidos
+        if (!validateCompanions(tourist, participantCount, companions).isEmpty()) {
+            throw new BusinessException("companions", "Revisá los datos de los acompañantes");
+        }
+
+        Booking booking = Booking.builder()
                 .tourist(tourist)
                 .availability(availability)
                 .participantCount(participantCount)
                 .status(BookingStatus.PENDING)
                 .bookingDate(LocalDateTime.now(clock))
-                .build());
+                .build();
+        for (int i = 0; i < participantCount - 1; i++) {
+            ParticipantForm data = companions.get(i);
+            booking.getParticipants().add(Participant.builder()
+                    .booking(booking)
+                    .firstName(data.getFirstName().trim())
+                    .lastName(data.getLastName().trim())
+                    .build());
+        }
+        return bookingRepository.save(booking);
+    }
+
+    // Revisa los datos de cada acompañante (nombre y apellido, como en el MER). Devuelve campo -> mensaje
+    // de error, por ejemplo "companions[0].firstName" -> "Ingresá el nombre". Si está todo bien, queda vacío.
+    public Map<String, String> validateCompanions(Tourist tourist, Integer participantCount,
+                                                  List<ParticipantForm> companions) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        int needed = participantCount == null ? 0 : Math.max(0, participantCount - 1);
+        for (int i = 0; i < needed; i++) {
+            String field = "companions[" + i + "].";
+            ParticipantForm data = companions != null && i < companions.size() && companions.get(i) != null
+                    ? companions.get(i) : new ParticipantForm();
+
+            if (!DocumentValidator.isValidName(data.getFirstName())) {
+                errors.put(field + "firstName", "Ingresá el nombre (solo letras)");
+            }
+            if (!DocumentValidator.isValidName(data.getLastName())) {
+                errors.put(field + "lastName", "Ingresá el apellido (solo letras)");
+            }
+        }
+        return errors;
     }
 
     // Reservas del turista: primero las más próximas

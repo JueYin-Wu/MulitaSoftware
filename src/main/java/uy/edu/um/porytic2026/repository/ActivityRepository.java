@@ -19,6 +19,9 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     // Búsquedas para el buscador de la página de inicio
     List<Activity> findByNameContainingIgnoreCase(String name);
 
+    // API: buscar por palabra clave en el nombre o la descripción
+    List<Activity> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrderByNameAsc(String name, String description);
+
     List<Activity> findByNameContainingIgnoreCaseAndLocationDepartment(String name, String department);
 
     // En cuántas actividades se usa un tipo de actividad (para no borrar uno que está en uso)

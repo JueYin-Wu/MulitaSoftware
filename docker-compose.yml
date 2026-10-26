@@ -1,0 +1,55 @@
+# Uruguay Mnatural con Docker.
+#
+# Solo la base de datos (para programar y correr la aplicación desde IntelliJ):
+#     docker compose up -d
+#
+# Todo junto: base de datos + aplicación (la página queda en http://localhost:8080):
+#     docker compose --profile app up -d --build
+#   (antes, parar la aplicación en IntelliJ: las dos usan el puerto 8080)
+#
+# Apagar:                                docker compose --profile app down
+# Borrar todos los datos y empezar de 0: docker compose --profile app down -v
+services:
+  postgres:
+    image: postgres:17
+    container_name: mnatural-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mnatural
+      POSTGRES_USER: mnatural
+      POSTGRES_PASSWORD: mnatural
+    ports:
+      # Puerto 55432 en la computadora -> 5432 dentro del contenedor
+      # (se usa un puerto poco común porque 5432 y 5433 suelen estar ocupados por un PostgreSQL ya instalado)
+      - "55432:5432"
+    volumes:
+      # Los datos quedan en un volumen de Docker: sobreviven aunque se apague el contenedor
+      - mnatural-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mnatural -d mnatural"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    # Solo se levanta con "--profile app", para que el día a día (IntelliJ + base) siga igual
+    profiles: ["app"]
+    build: .
+    container_name: mnatural-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy   # espera a que la base esté lista antes de arrancar
+    environment:
+      # Dentro de Docker la base se llama "postgres" (el nombre del servicio) y usa su puerto interno 5432
+      DB_URL: jdbc:postgresql://postgres:5432/mnatural
+      DB_USER: mnatural
+      DB_PASSWORD: mnatural
+    ports:
+      - "8080:8080"
+    volumes:
+      # Las fotos subidas se guardan en la carpeta uploads del proyecto (las mismas que usa IntelliJ)
+      - ./uploads:/app/uploads
+
+volumes:
+  mnatural-data:

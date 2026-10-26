@@ -39,6 +39,11 @@ public class Tag {
     @Column(name = "proposal_date")
     private LocalDateTime proposalDate;
 
+    // Foto de portada del tipo de actividad (tarjetas "Explorá por tipo de actividad" del inicio).
+    // Si no tiene, se usa la foto de su actividad más reservada.
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @ManyToMany(mappedBy = "tags")
     private List<Activity> activities;
 }

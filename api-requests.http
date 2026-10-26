@@ -1,0 +1,45 @@
+### API REST de Uruguay Mnatural
+### En IntelliJ: abrir este archivo y tocar el ▶ verde al lado de cada pedido.
+### Primero pedir el token (1); IntelliJ lo guarda y lo usa en los demás.
+
+### 1) Pedir un token (200 OK). Con contraseña incorrecta -> 401
+POST http://localhost:8080/api/v1/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin1234"
+}
+
+> {% client.global.set("token", response.body.accessToken); %}
+
+### 2) Sin token -> 401 Unauthorized
+GET http://localhost:8080/api/v1/providers
+
+### 3) Listado de emprendimientos (200)
+GET http://localhost:8080/api/v1/providers
+Authorization: Bearer {{token}}
+
+### 4) Verificar un emprendimiento por id (200; con un id que no existe -> 404)
+GET http://localhost:8080/api/v1/providers/2/verification
+Authorization: Bearer {{token}}
+
+### 5) Verificar un emprendimiento por RUT (200 / 404; RUT mal escrito -> 400)
+GET http://localhost:8080/api/v1/providers/verification?rut=214567890018
+Authorization: Bearer {{token}}
+
+### 6) Actividades de un día en un departamento (cambiar la fecha por una que tenga disponibilidad)
+GET http://localhost:8080/api/v1/activities?date=2026-11-07&department=rocha
+Authorization: Bearer {{token}}
+
+### 7) Top 3 del mes por departamento (sin month -> mes actual)
+GET http://localhost:8080/api/v1/activities/top?department=montevideo&month=2026-10
+Authorization: Bearer {{token}}
+
+### 8) Buscar por palabra clave
+GET http://localhost:8080/api/v1/activities/search?q=kayak
+Authorization: Bearer {{token}}
+
+### 9) Parámetro mal escrito -> 400 Bad Request
+GET http://localhost:8080/api/v1/activities?date=07-11-2026&department=rocha
+Authorization: Bearer {{token}}

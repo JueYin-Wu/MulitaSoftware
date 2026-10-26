@@ -5,6 +5,8 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings")
@@ -38,6 +40,14 @@ public class Booking {
     @ManyToOne
     @JoinColumn(name = "availability_id", nullable = false)
     private Availability availability;
+
+    // Acompañantes (MER: RESERVA "incluye" PARTICIPANTE). El turista que reserva es el primer participante
+    // y sus datos ya están en su cuenta, así que acá van solo los demás: participantCount - 1 personas.
+    // cascade = ALL: al guardar la reserva se guardan también sus acompañantes.
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id")
+    @Builder.Default
+    private List<Participant> participants = new ArrayList<>();
 
     // Precio total: precio por persona de la actividad por la cantidad de participantes
     public Double getTotalPrice() {

@@ -69,4 +69,33 @@ public class User {
         }
         return initials.length() > 0 ? initials.toString() : name.substring(0, 1).toUpperCase();
     }
+
+    // Nombre y apellido de la persona, con mayúscula inicial ("erika puhl" -> "Erika Puhl").
+    // A diferencia de getDisplayName, en un prestador es su nombre y no el del emprendimiento.
+    public String getFullName() {
+        String full = (firstName == null ? "" : firstName) + " " + (lastName == null ? "" : lastName);
+        StringBuilder result = new StringBuilder();
+        for (String word : full.trim().split("\\s+")) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            if (result.length() > 0) {
+                result.append(' ');
+            }
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return result.toString();
+    }
+
+    // Iniciales de nombre y apellido ("Erika Puhl" -> "EP"), para el botón del usuario cuando no tiene foto
+    public String getPersonInitials() {
+        String initials = "";
+        if (firstName != null && !firstName.isBlank()) {
+            initials += Character.toUpperCase(firstName.trim().charAt(0));
+        }
+        if (lastName != null && !lastName.isBlank()) {
+            initials += Character.toUpperCase(lastName.trim().charAt(0));
+        }
+        return initials.isEmpty() ? "?" : initials;
+    }
 }

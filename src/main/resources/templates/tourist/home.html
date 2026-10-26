@@ -14,6 +14,39 @@
         </div>
     </section>
 
+    <!-- Buscador: destino, tipo de actividad y fecha (la letra pide poder buscar por esos criterios).
+         Manda los datos a la página de actividades, que muestra los resultados filtrados. -->
+    <section class="home-search-wrap">
+        <div class="container">
+            <form th:action="@{/activities}" method="get" class="home-search" role="search">
+                <div class="home-search-field">
+                    <label for="hs-department">¿A dónde?</label>
+                    <select id="hs-department" name="department">
+                        <option value="">Todo Uruguay</option>
+                        <option th:each="d : ${departments}" th:value="${d}" th:text="${d}">Departamento</option>
+                    </select>
+                </div>
+                <div class="home-search-field">
+                    <label for="hs-tag">¿Qué querés hacer?</label>
+                    <select id="hs-tag" name="tag">
+                        <option value="">Cualquier actividad</option>
+                        <option th:each="t : ${tags}" th:value="${t.id}" th:text="${t.name}">Tipo</option>
+                    </select>
+                </div>
+                <div class="home-search-field">
+                    <label for="hs-date">¿Cuándo?</label>
+                    <input type="date" id="hs-date" name="date" th:min="${today}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-pill home-search-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
+                    </svg>
+                    Buscar
+                </button>
+            </form>
+        </div>
+    </section>
+
     <!-- Presentación -->
     <section class="intro">
         <div class="container">
@@ -25,13 +58,34 @@
         </div>
     </section>
 
-    <!-- Algunas actividades destacadas; el listado completo está en /activities -->
+    <!-- Explorar por tipo de actividad: los 5 tipos más reservados, con la foto de su actividad más reservada -->
+    <section class="section section-tight" th:unless="${#lists.isEmpty(categories)}">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <h2>Explorá por tipo de actividad</h2>
+                    <p>Las experiencias que más eligen los viajeros.</p>
+                </div>
+            </div>
+            <div class="category-grid">
+                <a class="category-card" th:each="c : ${categories}" th:href="@{/activities(tag=${c.tag.id})}">
+                    <img th:if="${c.imageUrl != null}" th:src="@{${c.imageUrl}}" alt="" loading="lazy">
+                    <div class="category-card-text">
+                        <h3 th:text="${c.tag.name}">Senderismo</h3>
+                        <span th:text="${c.activityCount} + (${c.activityCount == 1} ? ' actividad' : ' actividades')">3 actividades</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Actividades mejor valoradas; el listado completo está en /activities -->
     <section class="section">
         <div class="container">
             <div class="section-header">
                 <div>
                     <h2>Actividades destacadas</h2>
-                    <p>Una muestra de lo que podés hacer en todo el país.</p>
+                    <p>Las mejor valoradas por quienes ya las vivieron.</p>
                 </div>
                 <a th:href="@{/activities}" class="btn btn-outline btn-pill btn-sm"
                    th:text="'Ver todas las actividades (' + ${totalActivities} + ')'">Ver todas las actividades</a>
@@ -49,15 +103,51 @@
         </div>
     </section>
 
-    <!-- Invitación para prestadores -->
-    <section class="section" th:unless="${loggedIn}">
+    <!-- Cómo funciona -->
+    <section class="section how-it-works">
         <div class="container">
+            <div class="section-header">
+                <div>
+                    <h2>Cómo funciona</h2>
+                    <p>Reservar una experiencia lleva solo unos minutos.</p>
+                </div>
+            </div>
+            <ol class="steps">
+                <li class="step">
+                    <span class="step-number">1</span>
+                    <h3>Elegí una experiencia</h3>
+                    <p>Buscá por destino, tipo de actividad o fecha y mirá precios, requisitos y opiniones de otros viajeros.</p>
+                </li>
+                <li class="step">
+                    <span class="step-number">2</span>
+                    <h3>Reservá tu lugar</h3>
+                    <p>Creá tu cuenta, elegí fecha y horario, indicá cuántas personas van y aboná en línea de forma segura.</p>
+                </li>
+                <li class="step">
+                    <span class="step-number">3</span>
+                    <h3>Viví Uruguay</h3>
+                    <p>Disfrutá la actividad con un prestador local y después contá tu experiencia con una reseña.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- Invitaciones: a turistas para crear su cuenta y a prestadores para publicar (solo sin sesión) -->
+    <section class="section" th:unless="${loggedIn}">
+        <div class="container cta-grid">
+            <div class="cta-band">
+                <div>
+                    <h2>¿Querés reservar?</h2>
+                    <p>Creá tu cuenta de turista gratis y reservá tus próximas experiencias en pocos pasos.</p>
+                </div>
+                <a th:href="@{/register/tourist}" class="btn btn-primary btn-pill">Crear mi cuenta</a>
+            </div>
             <div class="cta-band">
                 <div>
                     <h2>¿Tenés un emprendimiento turístico?</h2>
                     <p>Registrate como prestador, persona física o jurídica. Cuando el equipo de Uruguay Mnatural apruebe tu solicitud, vas a poder publicar tus actividades.</p>
                 </div>
-                <a th:href="@{/register/provider}" class="btn btn-primary btn-pill">Registrarme como prestador</a>
+                <a th:href="@{/register/provider}" class="btn btn-outline btn-pill">Registrarme como prestador</a>
             </div>
         </div>
     </section>
@@ -65,5 +155,6 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<script th:src="@{/js/date-input.js}"></script>
 </body>
 </html>
