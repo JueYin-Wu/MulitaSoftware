@@ -107,6 +107,35 @@ public final class DocumentValidator {
                 : "Cédula no válida. Revisá los números y el dígito verificador (ej: 1.234.567-2)";
     }
 
+    // Fecha de nacimiento que llega de un formulario (campo de tipo fecha: AAAA-MM-DD). Null si está vacía o mal escrita.
+    public static java.time.LocalDate parseBirthDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return java.time.LocalDate.parse(value.trim());
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    // Problema con una fecha de nacimiento (vacía, mal escrita, en el futuro o de hace más de 120 años), o null si está bien
+    public static String birthDateProblem(String value, java.time.LocalDate today) {
+        if (value == null || value.isBlank()) {
+            return "Ingresá la fecha de nacimiento";
+        }
+        java.time.LocalDate date = parseBirthDate(value);
+        if (date == null || date.isAfter(today) || date.isBefore(today.minusYears(120))) {
+            return "La fecha de nacimiento no es válida";
+        }
+        return null;
+    }
+
+    // Edad que tiene (o va a tener) una persona en cierto día, por ejemplo el día de la actividad
+    public static int ageOn(java.time.LocalDate birthDate, java.time.LocalDate day) {
+        return java.time.Period.between(birthDate, day).getYears();
+    }
+
     // Deja el documento como se guarda en la base: la cédula solo con números, el pasaporte en mayúsculas
     public static String normalizeDocument(DocumentType type, String value) {
         return type == DocumentType.PASSPORT ? normalizePassport(value) : onlyDigits(value);

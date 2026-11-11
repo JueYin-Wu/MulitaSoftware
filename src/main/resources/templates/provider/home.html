@@ -21,7 +21,7 @@
             <span th:replace="~{fragments/avatar :: avatar(${provider}, 'lg')}"></span>
             <div class="profile-photo-actions">
                 <h2>Foto de perfil</h2>
-                <p class="muted">Es la imagen que ven los turistas en tus actividades y en tu perfil. JPG, PNG o WEBP, hasta 2 MB.</p>
+                <p class="muted">Es la imagen que ven los turistas en tus actividades y en tu perfil. JPG, PNG o WEBP, hasta 10 MB.</p>
                 <!-- El token de seguridad va también en la dirección para que funcione con archivos (multipart) -->
                 <form th:action="@{/provider/profile-image(${_csrf.parameterName}=${_csrf.token})}" method="post"
                       enctype="multipart/form-data" class="upload-form">
@@ -58,8 +58,8 @@
                 <div class="stack-actions">
                     <a th:href="@{/provider/activities/new}" class="btn btn-primary btn-block">+ Nueva actividad</a>
                     <a th:href="@{/provider/activities}" class="btn btn-outline btn-block">Ver mis actividades</a>
+                    <a th:href="@{/provider/bookings}" class="btn btn-outline btn-block">Ver reservas</a>
                 </div>
-                <p class="hint">Próximamente: fechas y cupos, y las reservas recibidas.</p>
             </section>
         </div>
     </div>
@@ -67,5 +67,6 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<script th:src="@{/js/file-size-check.js}"></script>
 </body>
 </html>

@@ -57,6 +57,13 @@ public class DataLoader implements CommandLineRunner {
     public void run(String... args) {
         // Se hace en cada arranque: así los tipos que ya estaban guardados en la base también reciben su foto
         assignTagImages();
+        // El turista de prueba de una base anterior todavía no tenía fecha de nacimiento
+        userRepository.findByUsername("turista")
+                .filter(u -> u instanceof Tourist t && t.getBirthDate() == null)
+                .ifPresent(u -> {
+                    ((Tourist) u).setBirthDate(LocalDate.of(1998, 4, 12));
+                    userRepository.save(u);
+                });
 
         if (userRepository.count() > 0) {
             return; // si ya hay datos, no carga de nuevo
@@ -133,6 +140,7 @@ public class DataLoader implements CommandLineRunner {
                 .phone("091234567")
                 .documentType(DocumentType.CI)
                 .idDocument("34567894")
+                .birthDate(LocalDate.of(1998, 4, 12))
                 .build();
         userRepository.save(sofia);
 

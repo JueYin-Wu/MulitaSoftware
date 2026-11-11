@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Nueva actividad')}"></head>
+<head th:replace="~{fragments/head :: head(${editing} ? 'Editar actividad' : 'Nueva actividad')}"></head>
 <body>
 
 <div th:replace="~{fragments/header :: header}"></div>
@@ -12,15 +12,16 @@
             <span aria-hidden="true">/</span>
             <a th:href="@{/provider/activities}">Mis actividades</a>
             <span aria-hidden="true">/</span>
-            <span>Nueva actividad</span>
+            <span th:text="${editing} ? 'Editar actividad' : 'Nueva actividad'">Nueva actividad</span>
         </nav>
         <div class="panel-title">
-            <h1>Nueva actividad</h1>
-            <p>Completá los datos que van a ver los turistas en el portal.</p>
+            <h1 th:text="${editing} ? 'Editar «' + ${activity.name} + '»' : 'Nueva actividad'">Nueva actividad</h1>
+            <p th:text="${editing} ? 'Los cambios se ven enseguida en el portal. Las reservas ya hechas mantienen su precio.' : 'Completá los datos que van a ver los turistas en el portal.'">Completá los datos</p>
         </div>
 
         <!-- multipart porque lleva fotos. El token de seguridad va en la dirección para que funcione con archivos -->
-        <form th:action="@{/provider/activities/new(${_csrf.parameterName}=${_csrf.token})}" th:object="${form}"
+        <form th:action="${editing} ? @{/provider/activities/{id}/edit(id=${activity.id}, ${_csrf.parameterName}=${_csrf.token})} : @{/provider/activities/new(${_csrf.parameterName}=${_csrf.token})}"
+              th:object="${form}"
               method="post" enctype="multipart/form-data" novalidate>
 
             <div class="alert alert-error" th:if="${formError}" th:text="${formError}">Error</div>
@@ -64,7 +65,14 @@
                     <label for="photos">Fotos de la actividad (opcional)</label>
                     <input type="file" id="photos" name="photos" multiple accept="image/jpeg,image/png,image/webp"
                            th:classappend="${photosError != null} ? 'is-invalid'" th:attr="data-max=${maxPhotos}">
-                    <p class="hint" th:text="'Hasta ' + ${maxPhotos} + ' fotos JPG, PNG o WEBP de 2 MB cada una. La primera es la de la tarjeta.'">Hasta 5 fotos</p>
+                    <p class="hint" th:text="'Hasta ' + ${maxPhotos} + ' fotos JPG, PNG o WEBP de hasta 10 MB cada una. La primera es la de la tarjeta.'">Hasta 5 fotos</p>
+                    <!-- Al editar: fotos actuales. Si se suben nuevas, reemplazan a estas. -->
+                    <th:block th:if="${editing and activity.gallery != null and !#lists.isEmpty(activity.gallery)}">
+                        <div class="current-photos">
+                            <img th:each="img : ${activity.gallery}" th:src="@{${img}}" alt="">
+                        </div>
+                        <p class="hint">Estas son las fotos actuales. Si elegís fotos nuevas, reemplazan a todas estas; si no elegís ninguna, quedan como están.</p>
+                    </th:block>
                     <p class="field-error" id="photos-error" th:text="${photosError}" th:hidden="${photosError == null}"></p>
                 </div>
             </fieldset>
@@ -127,6 +135,7 @@
                         <label for="minimumAge">Edad mínima</label>
                         <input type="number" id="minimumAge" th:field="*{minimumAge}" th:errorclass="is-invalid" min="0" max="99"
                                placeholder="Vacío = todas las edades">
+                        <p class="hint">Al reservar se pide la fecha de nacimiento de cada persona y no se aceptan quienes no tengan esta edad el día de la actividad.</p>
                         <p class="field-error" th:if="${#fields.hasErrors('minimumAge')}" th:text="${#fields.errors('minimumAge')[0]}"></p>
                     </div>
                 </div>
@@ -192,7 +201,7 @@
 
             <div class="form-actions">
                 <a th:href="@{/provider/activities}" class="btn btn-outline">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Publicar actividad</button>
+                <button type="submit" class="btn btn-primary" th:text="${editing} ? 'Guardar cambios' : 'Publicar actividad'">Publicar actividad</button>
             </div>
         </form>
     </div>
@@ -201,5 +210,6 @@
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script th:src="@{/js/provider-activity.js}"></script>
+<script th:src="@{/js/file-size-check.js}"></script>
 </body>
 </html>

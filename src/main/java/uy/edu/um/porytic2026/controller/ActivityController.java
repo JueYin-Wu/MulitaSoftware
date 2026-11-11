@@ -12,6 +12,7 @@ import uy.edu.um.porytic2026.entities.EquipmentRole;
 import uy.edu.um.porytic2026.entities.Review;
 import uy.edu.um.porytic2026.services.ActivityService;
 import uy.edu.um.porytic2026.services.TagService;
+import uy.edu.um.porytic2026.services.WeatherService;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -23,10 +24,12 @@ public class ActivityController {
 
     private final ActivityService activityService;
     private final TagService tagService;
+    private final WeatherService weatherService;
 
-    public ActivityController(ActivityService activityService, TagService tagService) {
+    public ActivityController(ActivityService activityService, TagService tagService, WeatherService weatherService) {
         this.activityService = activityService;
         this.tagService = tagService;
+        this.weatherService = weatherService;
     }
 
     // Ejemplo: /activities?q=kayak&department=Rocha&tag=3&date=2026-11-07&maxPrice=2000&sort=price_asc
@@ -76,7 +79,11 @@ public class ActivityController {
 
         List<Review> reviews = activityService.findReviews(id);
         model.addAttribute("activity", activity);
-        model.addAttribute("slots", activityService.findUpcomingSlots(id));
+        // Si el prestador la dio de baja, la página se sigue viendo (por las reservas y reseñas viejas)
+        // pero sin fechas para reservar
+        model.addAttribute("slots", activity.isPublished() ? activityService.findUpcomingSlots(id) : java.util.List.of());
+        // Pronóstico del clima en el lugar de la actividad (fecha -> pronóstico); vacío si la API no respondió
+        model.addAttribute("forecasts", weatherService.forecastsFor(activity.getLocation()));
         model.addAttribute("requiredEquipment", activityService.findEquipment(id, EquipmentRole.REQUIRED));
         model.addAttribute("providedEquipment", activityService.findEquipment(id, EquipmentRole.PROVIDED));
         model.addAttribute("reviews", reviews);

@@ -59,6 +59,12 @@
                         <p class="field-error" th:if="${#fields.hasErrors('documentType')}" th:text="${#fields.errors('documentType')[0]}"></p>
                         <p class="field-error" th:if="${#fields.hasErrors('idDocument')}" th:text="${#fields.errors('idDocument')[0]}"></p>
                     </div>
+                    <div class="form-group">
+                        <label for="birthDate">Fecha de nacimiento</label>
+                        <input type="date" id="birthDate" th:field="*{birthDate}" th:errorclass="is-invalid" autocomplete="bday">
+                        <p class="hint">Algunas actividades tienen edad mínima.</p>
+                        <p class="field-error" th:if="${#fields.hasErrors('birthDate')}" th:text="${#fields.errors('birthDate')[0]}"></p>
+                    </div>
                 </fieldset>
 
                 <fieldset>
@@ -102,5 +108,6 @@
 <script th:src="@{/js/document-type.js}"></script>
 <script th:src="@{/js/password-rules.js}"></script>
 <script th:src="@{/js/password-toggle.js}"></script>
+<script th:src="@{/js/date-input.js}"></script>
 </body>
 </html>

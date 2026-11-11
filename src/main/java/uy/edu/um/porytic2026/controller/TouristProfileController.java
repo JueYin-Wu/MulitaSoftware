@@ -12,7 +12,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import uy.edu.um.porytic2026.entities.Tourist;
+import uy.edu.um.porytic2026.entities.PaymentMethod;
+import uy.edu.um.porytic2026.exceptions.BusinessException;
 import uy.edu.um.porytic2026.services.FileStorageService;
+import uy.edu.um.porytic2026.services.PaymentMethodService;
 import uy.edu.um.porytic2026.services.TouristService;
 import uy.edu.um.porytic2026.services.UserService;
 
@@ -24,12 +27,15 @@ public class TouristProfileController {
     private final TouristService touristService;
     private final UserService userService;
     private final FileStorageService fileStorageService;
+    private final PaymentMethodService paymentMethodService;
 
     public TouristProfileController(TouristService touristService, UserService userService,
-                                    FileStorageService fileStorageService) {
+                                    FileStorageService fileStorageService,
+                                    PaymentMethodService paymentMethodService) {
         this.touristService = touristService;
         this.userService = userService;
         this.fileStorageService = fileStorageService;
+        this.paymentMethodService = paymentMethodService;
     }
 
     @GetMapping("/tourists/{id}")
@@ -50,6 +56,8 @@ public class TouristProfileController {
         model.addAttribute("reviews", touristService.findReviews(id));
         if (isOwner) {
             model.addAttribute("upcomingBookings", touristService.findUpcomingBookings(id));
+            // Medios de pago: datos privados, solo los ve el propio turista
+            model.addAttribute("paymentMethods", paymentMethodService.findByTourist(tourist));
         }
         return "tourist/tourist-profile";
     }
@@ -80,6 +88,20 @@ public class TouristProfileController {
         Tourist tourist = currentTourist(authentication);
         userService.updateProfileImage(tourist, null, fileStorageService);
         redirectAttributes.addFlashAttribute("message", "Se quitó tu foto de perfil.");
+        return "redirect:/tourists/" + tourist.getId();
+    }
+
+    // Quitar una tarjeta guardada
+    @PostMapping("/tourist/payment-methods/{methodId}/delete")
+    public String deletePaymentMethod(@PathVariable Long methodId, Authentication authentication,
+                                      RedirectAttributes redirectAttributes) {
+        Tourist tourist = currentTourist(authentication);
+        try {
+            PaymentMethod method = paymentMethodService.delete(methodId, tourist);
+            redirectAttributes.addFlashAttribute("message", "Se quitó la tarjeta " + method.getMaskedNumber() + ".");
+        } catch (BusinessException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/tourists/" + tourist.getId();
     }
 

@@ -72,6 +72,7 @@ public class AuthController {
         validatePersonalData(form.getFirstName(), form.getLastName(), form.getEmail(), form.getPhone(),
                 form.getPassword(), form.getConfirmPassword(), result);
         validateIdentityDocument(form.getDocumentType(), form.getIdDocument(), "idDocument", result);
+        validateTouristBirthDate(form.getBirthDate(), result);
 
         if (result.hasErrors()) {
             return "auth/register-tourist";
@@ -200,6 +201,14 @@ public class AuthController {
     }
 
     // Documento de identidad (turista y prestador persona física): cédula o pasaporte
+    // Fecha de nacimiento del turista: obligatoria y válida (se usa para la edad mínima de las actividades)
+    private void validateTouristBirthDate(String birthDate, BindingResult result) {
+        String problem = DocumentValidator.birthDateProblem(birthDate, java.time.LocalDate.now());
+        if (problem != null) {
+            reject(result, "birthDate", problem.replace("Ingresá la", "Ingresá tu"));
+        }
+    }
+
     private void validateIdentityDocument(String documentType, String number, String field, BindingResult result) {
         DocumentType type = DocumentType.fromValue(documentType);
         if (type == null) {

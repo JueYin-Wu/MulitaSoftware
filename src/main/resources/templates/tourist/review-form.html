@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Dejar reseña')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container narrow">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/tourist/bookings}">Mis reservas</a>
+            <span aria-hidden="true">/</span>
+            <span>Dejar reseña</span>
+        </nav>
+
+        <div class="panel-title">
+            <h1>¿Cómo te fue?</h1>
+            <p>Tu opinión ayuda a otros viajeros a elegir. Se publica en la página de la actividad con tu nombre.</p>
+        </div>
+
+        <div class="booking-layout">
+            <section class="info-card booking-summary">
+                <img th:if="${activity.imageUrl != null}" th:src="@{${activity.imageUrl}}" th:alt="${activity.name}">
+                <h2 th:text="${activity.name}">Actividad</h2>
+                <p class="muted" th:text="${activity.provider.businessName} + ' · ' + ${#temporals.format(booking.availability.date, 'dd/MM/yyyy')}">Prestador · fecha</p>
+            </section>
+
+            <section class="info-card">
+                <form th:action="@{/tourist/bookings/{id}/review(id=${booking.id})}" method="post" novalidate>
+                    <!-- Valoración: 5 estrellas (son botones de radio; el CSS las pinta) -->
+                    <fieldset class="form-group rating-group">
+                        <legend>Tu valoración</legend>
+                        <div class="star-input" role="radiogroup" aria-label="Valoración de 1 a 5 estrellas">
+                            <th:block th:each="i : ${#numbers.sequence(5, 1)}">
+                                <input type="radio" name="rating" th:id="'star-' + ${i}" th:value="${i}"
+                                       th:checked="${form.rating != null and form.rating == i}">
+                                <label th:for="'star-' + ${i}" th:title="${i} + (${i} == 1 ? ' estrella' : ' estrellas')"
+                                       th:attr="aria-label=${i} + (${i} == 1 ? ' estrella' : ' estrellas')">★</label>
+                            </th:block>
+                        </div>
+                        <p class="hint" id="rating-text">Tocá las estrellas para puntuar</p>
+                        <p class="field-error" th:if="${ratingError != null}" th:text="${ratingError}"></p>
+                    </fieldset>
+
+                    <div class="form-group">
+                        <label for="comment">Tu comentario</label>
+                        <textarea id="comment" name="comment" rows="6" th:maxlength="${maxComment}"
+                                  th:classappend="${commentError != null} ? 'is-invalid'"
+                                  placeholder="¿Qué te gustó? ¿Qué le dirías a alguien que la está por reservar?"
+                                  th:text="${form.comment}"></textarea>
+                        <p class="hint"><span id="comment-count">0</span> / <span th:text="${maxComment}">1000</span> caracteres
+                            (mínimo <span th:text="${minComment}">10</span>)</p>
+                        <p class="field-error" th:if="${commentError != null}" th:text="${commentError}"></p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-pill">Publicar reseña</button>
+                    <p class="switch-link text-center"><a th:href="@{/tourist/bookings}">← Volver a mis reservas</a></p>
+                </form>
+            </section>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/review-form.js}"></script>
+</body>
+</html>

@@ -26,7 +26,12 @@ public class Review {
     @Max(5)
     private Integer rating;
 
+    // Una reseña por reserva (unique = true): no se puede reseñar dos veces la misma reserva
     @OneToOne
     @JoinColumn(name = "booking_id", nullable = false, unique = true)
     private Booking booking;
+
+    // Cuándo se escribió la reseña
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
 }

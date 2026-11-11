@@ -37,7 +37,7 @@ public class ProviderProfileController {
         List<Review> reviews = activityService.findProviderReviews(id);
         Double averageRating = activityService.averageRating(reviews);
         model.addAttribute("provider", provider);
-        model.addAttribute("activities", activityService.findByProvider(id));
+        model.addAttribute("activities", activityService.findPublishedByProvider(id)); // sin las dadas de baja
         model.addAttribute("reviews", reviews.stream().limit(5).toList()); // las 5 más recientes
         model.addAttribute("reviewCount", reviews.size());
         model.addAttribute("averageRating", averageRating);

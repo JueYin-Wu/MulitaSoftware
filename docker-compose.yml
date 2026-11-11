@@ -3,9 +3,9 @@
 # Solo la base de datos (para programar y correr la aplicación desde IntelliJ):
 #     docker compose up -d
 #
-# Todo junto: base de datos + aplicación (la página queda en http://localhost:8080):
+# Todo junto: base de datos + aplicación (la página queda en http://localhost:8081):
 #     docker compose --profile app up -d --build
-#   (antes, parar la aplicación en IntelliJ: las dos usan el puerto 8080)
+#   (antes, parar la aplicación en IntelliJ: las dos usan el puerto 8081)
 #
 # Apagar:                                docker compose --profile app down
 # Borrar todos los datos y empezar de 0: docker compose --profile app down -v
@@ -45,8 +45,11 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/mnatural
       DB_USER: mnatural
       DB_PASSWORD: mnatural
+      # Credenciales de Mercado Pago: se toman del archivo .env (MP_ACCESS_TOKEN=... y MP_PUBLIC_KEY=...), que no se sube a Git
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
+      MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:-}
     ports:
-      - "8080:8080"
+      - "8081:8081"
     volumes:
       # Las fotos subidas se guardan en la carpeta uploads del proyecto (las mismas que usa IntelliJ)
       - ./uploads:/app/uploads

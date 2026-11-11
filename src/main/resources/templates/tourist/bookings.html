@@ -33,16 +33,23 @@
                         <a th:href="@{/activities/{id}(id=${b.availability.activity.id})}" th:text="${b.availability.activity.name}">Actividad</a>
                         <span class="muted"
                               th:text="${#temporals.format(b.availability.date, 'dd/MM/yyyy')} + ' · ' + ${#temporals.format(b.availability.time, 'HH:mm')} + ' h · ' + ${b.participantCount} + (${b.participantCount} == 1 ? ' persona' : ' personas') + ' · $ ' + ${#numbers.formatDecimal(b.totalPrice, 1, 'POINT', 0, 'COMMA')}">Detalle</span>
+                        <span th:if="${forecasts.get(b.id) != null}" class="small">
+                            Clima previsto: <span th:replace="~{fragments/weather :: badge(${forecasts.get(b.id)})}"></span>
+                        </span>
                         <span class="muted small" th:unless="${#lists.isEmpty(b.participants)}"
                               th:text="'Con: ' + ${#strings.listJoin(b.participants.![firstName + ' ' + lastName], ', ')}">Con: Ana Pérez</span>
                     </div>
                     <span class="chip" th:classappend="${b.status.name() == 'CONFIRMED'} ? 'chip-green' : 'chip-orange'" th:text="${b.statusLabel}">Estado</span>
+                    <!-- Reserva sin pagar: botón para pagar con Mercado Pago -->
+                    <a th:if="${b.status.name() == 'PENDING'}" th:href="@{/tourist/bookings/{id}/pay(id=${b.id})}"
+                       class="btn btn-primary btn-sm" th:text="${b.payment != null and b.payment.status != null and b.payment.status.name() == 'REJECTED'} ? 'Reintentar pago' : 'Pagar'">Pagar</a>
 
                     <details class="reject-box cancel-box">
                         <summary class="btn btn-danger btn-sm">Cancelar</summary>
                         <form th:action="@{/tourist/bookings/{id}/cancel(id=${b.id})}" method="post">
                             <p class="hint" th:if="${b.status.name() == 'CONFIRMED' and refundableNow.get(b.id)}"
-                               th:text="'Si cancelás ahora se te devuelve el ' + ${b.availability.activity.refundPercentage} + ' %.'">Reembolso</p>
+                               th:text="'Si cancelás ahora se te devuelve el ' + ${b.availability.activity.refundPercentage} + ' % de lo que pagaste'
+                                       + (${b.payment != null and b.payment.amount != null} ? ' ($ ' + ${#numbers.formatDecimal(b.payment.amount * b.availability.activity.refundPercentage / 100, 1, 'POINT', 0, 'COMMA')} + ')' : '') + '.'">Reembolso</p>
                             <p class="hint" th:if="${b.status.name() == 'CONFIRMED' and !refundableNow.get(b.id)}">
                                 Según la política de la actividad, si cancelás ahora no se devuelve el dinero.</p>
                             <p class="hint" th:if="${b.status.name() == 'PENDING'}">Como todavía no pagaste, no hay nada que devolver.</p>
@@ -62,9 +69,18 @@
                         <a th:href="@{/activities/{id}(id=${b.availability.activity.id})}" th:text="${b.availability.activity.name}">Actividad</a>
                         <span class="muted"
                               th:text="${#temporals.format(b.availability.date, 'dd/MM/yyyy')} + ' · ' + ${b.participantCount} + (${b.participantCount} == 1 ? ' persona' : ' personas')">Detalle</span>
+                        <span class="muted small" th:if="${b.payment != null and b.payment.refundedAmount != null}"
+                              th:text="'Devolución: $ ' + ${#numbers.formatDecimal(b.payment.refundedAmount, 1, 'POINT', 0, 'COMMA')}">Devolución</span>
                     </div>
                     <span class="chip" th:classappend="${b.active} ? 'chip-cyan' : 'chip-muted'"
                           th:text="${b.active} ? 'Realizada' : ${b.statusLabel}">Estado</span>
+                    <!-- Reseña: botón si todavía no la dejó, o las estrellas que puso -->
+                    <a th:if="${reviewable.contains(b.id)}" th:href="@{/tourist/bookings/{id}/review(id=${b.id})}"
+                       class="btn btn-primary btn-sm">Dejar reseña</a>
+                    <span th:if="${b.review != null}" class="stars small my-review"
+                          th:attr="aria-label='Tu valoración: ' + ${b.review.rating} + ' de 5'" title="Tu reseña">
+                        <span th:each="i : ${#numbers.sequence(1, 5)}" th:text="${i <= b.review.rating} ? '★' : '☆'">★</span>
+                    </span>
                 </li>
             </ul>
         </section>

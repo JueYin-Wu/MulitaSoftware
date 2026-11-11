@@ -59,7 +59,7 @@ public class ActivityService {
     // Se ordenan por reservas confirmadas; si empatan, por cantidad de actividades.
     // La foto de cada tipo es la de su actividad más reservada (así no hay que cargar imágenes aparte).
     public List<CategoryCard> findTopCategories(int amount) {
-        List<Activity> activities = activityRepository.findAll();
+        List<Activity> activities = published(activityRepository.findAll());
 
         // Reservas confirmadas de cada actividad (se calcula una sola vez)
         Map<Long, Long> bookingsByActivity = new HashMap<>();
@@ -92,16 +92,26 @@ public class ActivityService {
                 .toList();
     }
 
+    // Actividades publicadas (las dadas de baja no se muestran a los turistas)
     public List<Activity> findAll() {
-        return activityRepository.findAll();
+        return published(activityRepository.findAll());
     }
 
     public List<Activity> findByDepartment(String department) {
-        return activityRepository.findByLocationDepartment(department);
+        return published(activityRepository.findByLocationDepartment(department));
     }
 
-    // Búsqueda por texto y/o departamento. Si los dos están vacíos, devuelve todas.
+    // Deja solo las publicadas
+    private static List<Activity> published(List<Activity> activities) {
+        return activities.stream().filter(Activity::isPublished).toList();
+    }
+
+    // Búsqueda por texto y/o departamento (solo publicadas). Si los dos están vacíos, devuelve todas.
     public List<Activity> search(String text, String department) {
+        return published(searchAll(text, department));
+    }
+
+    private List<Activity> searchAll(String text, String department) {
         boolean hasText = text != null && !text.isBlank();
         boolean hasDepartment = department != null && !department.isBlank();
 
@@ -163,7 +173,7 @@ public class ActivityService {
     // Actividades destacadas del inicio: las mejor valoradas (si empatan, la que tiene más reseñas).
     // Las que todavía no tienen reseñas quedan al final.
     public List<Activity> findFeatured(int amount) {
-        return sortByRating(activityRepository.findAll()).stream().limit(amount).toList();
+        return sortByRating(findAll()).stream().limit(amount).toList();
     }
 
     // Ordena de mejor a peor valoración promedio; desempata la cantidad de reseñas
@@ -207,6 +217,11 @@ public class ActivityService {
 
     public List<Activity> findByProvider(Long providerId) {
         return activityRepository.findByProviderId(providerId);
+    }
+
+    // Actividades publicadas de un prestador (para su perfil público)
+    public List<Activity> findPublishedByProvider(Long providerId) {
+        return published(activityRepository.findByProviderId(providerId));
     }
 
     public List<Review> findProviderReviews(Long providerId) {

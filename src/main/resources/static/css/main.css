@@ -692,10 +692,112 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
    (la clase is-empty la pone date-input.js) */
 input[type="date"].is-empty { color: #8a8894; }
 
+/* ---------- Página de pago ---------- */
+.payment-box { display: flex; flex-direction: column; gap: 14px; }
+.payment-state { text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.payment-state h2 { margin: 0; }
+.payment-state p { margin: 0; color: var(--muted); }
+.payment-state .facts { text-align: left; }
+.payment-icon {
+    width: 64px; height: 64px; margin: 0 auto 4px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    font-size: 30px; font-weight: 700;
+    background: rgba(0, 194, 136, 0.15); color: var(--green);
+}
+.payment-icon.payment-wait { background: rgba(255, 183, 3, 0.15); }
+.btn-mercadopago { background: #009ee3; color: #fff; font-weight: 600; }
+.btn-mercadopago:hover { background: #0089c7; color: #fff; }
+.pay-form .hint { margin-top: 8px; }
+.card-payment { margin: 4px 0 14px; }
+.card-payment-title { font-size: 18px; margin: 0 0 10px; }
+#cardPaymentBrick_container { min-height: 120px; }
+.test-help { border: 1px dashed var(--border); border-radius: 10px; padding: 10px 14px; color: var(--muted); font-size: 14px; }
+.test-help summary { cursor: pointer; color: var(--cyan); font-weight: 600; }
+.test-help ul { margin: 6px 0 0; padding-left: 18px; }
+.test-help code { color: var(--amber); }
+
+/* ---------- Reseñas: elegir estrellas ---------- */
+/* Las estrellas están en el HTML de la 5 a la 1 y se muestran al revés (row-reverse):
+   así "la elegida y las de su izquierda" se pueden pintar solo con CSS (~ = las que siguen en el HTML) */
+.rating-group { border: 0; padding: 0; margin: 0 0 18px; }
+.rating-group legend { font-weight: 600; margin-bottom: 6px; }
+.star-input { display: inline-flex; flex-direction: row-reverse; gap: 4px; }
+.star-input input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.star-input label { font-size: 40px; line-height: 1; color: var(--surface-2); cursor: pointer; transition: color 0.12s, transform 0.12s; }
+.star-input label:hover { transform: scale(1.1); }
+.star-input input:checked ~ label,
+.star-input label:hover,
+.star-input label:hover ~ label { color: var(--amber); }
+.star-input input:focus-visible + label { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
+.my-review { color: var(--amber); }
+
+/* ---------- Clima ---------- */
+.weather { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.weather-icon { font-size: 18px; line-height: 1; }
+.weather-rain-chance { color: var(--cyan); font-size: 13px; }
+.weather-rain .weather-rain-chance { font-weight: 600; }
+.weather-source { margin-top: 10px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Medios de pago guardados ---------- */
+.card-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 10px; }
+.saved-card { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 12px;
+    background: var(--surface); border: 1px solid var(--border); }
+.saved-card form { margin: 0 0 0 auto; }
+.card-chip { font-size: 24px; }
+.saved-card-info { display: flex; flex-direction: column; }
+.saved-card-info strong { letter-spacing: 0.5px; }
+
+/* ---------- Reservas del prestador ---------- */
+.schedule-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.schedule-toolbar .tabs { margin: 0; }
+.schedule-filter select { min-width: 240px; }
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat { padding: 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; }
+.stat strong { font-family: var(--font-title); font-size: 30px; color: var(--cyan); line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 14px; }
+.schedule-card { padding: 18px 20px; margin-bottom: 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+.schedule-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.schedule-head h2 { font-size: 20px; margin: 0 0 4px; }
+.schedule-when { margin: 0; color: var(--muted); }
+.schedule-when strong { color: var(--text); text-transform: capitalize; }
+.schedule-counts { display: flex; gap: 6px; flex-wrap: wrap; }
+.schedule-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.schedule-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 600; border-bottom: 2px solid var(--cyan); }
+.schedule-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.schedule-table .contact a { display: block; color: var(--text); }
+.companion-list { margin: 4px 0 0; padding-left: 16px; color: var(--muted); }
+.row-inactive td { opacity: 0.5; }
+
+/* Al imprimir la lista: fondo blanco y sin menús */
+@media print {
+    .site-header, .site-footer, .no-print, .breadcrumb { display: none !important; }
+    body { background: #fff; color: #000; }
+    .schedule-card, .stat { background: #fff; border-color: #ccc; break-inside: avoid; }
+    .schedule-table th, .schedule-table td, .schedule-when strong, .schedule-table .contact a { color: #000; }
+}
+
+/* ---------- Fechas y cupos (prestador) ---------- */
+.date-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+.date-form .form-group { margin: 0; }
+.date-form .btn { height: 46px; }
+input[type="time"] { color-scheme: dark; font-family: inherit; }
+.capacity-form { display: flex; gap: 6px; align-items: center; margin: 0; }
+.capacity-form input { width: 90px; padding: 8px 10px; }
+.capitalize { text-transform: capitalize; }
+.current-photos { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
+.current-photos img { width: 90px; height: 68px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
+/* ---------- Páginas de error ---------- */
+.error-page { padding: 64px 24px; }
+.error-page h1 { font-size: 32px; margin-bottom: 10px; }
+.error-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+
 /* ---------- Formularios ---------- */
 
 input[type="text"], input[type="email"], input[type="password"], input[type="tel"], input[type="number"],
-input[type="date"], select, textarea {
+input[type="date"], input[type="time"], select, textarea {
     width: 100%;
     padding: 12px 14px;
     background: var(--surface-2);

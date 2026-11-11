@@ -25,6 +25,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Cuántas reservas en cierto estado tiene una actividad (para los tipos de actividad más reservados)
     long countByAvailabilityActivityIdAndStatus(Long activityId, BookingStatus status);
 
+    // Todas las reservas de las actividades de un prestador
+    List<Booking> findByAvailabilityActivityProviderId(Long providerId);
+
+    // ¿Una fecha tiene reservas vigentes? (para no borrarla)
+    boolean existsByAvailabilityIdAndStatusIn(Long availabilityId, Collection<BookingStatus> statuses);
+
     // ¿El turista ya tiene una reserva vigente para esa fecha? (para no reservar dos veces lo mismo)
     boolean existsByTouristIdAndAvailabilityIdAndStatusIn(Long touristId, Long availabilityId,
                                                           Collection<BookingStatus> statuses);

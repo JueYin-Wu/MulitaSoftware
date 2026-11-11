@@ -14,4 +14,5 @@ public class ParticipantForm {
 
     private String firstName;
     private String lastName;
+    private String birthDate; // AAAA-MM-DD (lo manda el campo de tipo fecha)
 }

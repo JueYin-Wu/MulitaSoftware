@@ -12,7 +12,7 @@ public class UploadExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public String fileTooLarge(HttpServletRequest request, RedirectAttributes redirectAttributes) {
-        redirectAttributes.addFlashAttribute("error", "La imagen no puede pesar más de 2 MB");
+        redirectAttributes.addFlashAttribute("error", "La imagen no puede pesar más de " + uy.edu.um.porytic2026.services.FileStorageService.MAX_MB + " MB");
         String previousPage = request.getHeader("Referer"); // la página donde estaba el formulario
         return "redirect:" + (previousPage != null ? previousPage : "/");
     }

@@ -18,7 +18,9 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    private static final long MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+    // Máximo por foto (las fotos de celular suelen pesar entre 3 y 8 MB)
+    public static final int MAX_MB = 10;
+    private static final long MAX_SIZE = MAX_MB * 1024L * 1024L;
 
     // Tipos de imagen aceptados y la extensión con la que se guardan
     private static final Map<String, String> ALLOWED_TYPES = Map.of(
@@ -42,7 +44,7 @@ public class FileStorageService {
             throw new IllegalArgumentException("La imagen tiene que ser JPG, PNG o WEBP");
         }
         if (file.getSize() > MAX_SIZE) {
-            throw new IllegalArgumentException("La imagen no puede pesar más de 2 MB");
+            throw new IllegalArgumentException("La imagen no puede pesar más de " + MAX_MB + " MB");
         }
 
         // Nombre al azar para que no se pisen archivos ni se pueda adivinar la ruta

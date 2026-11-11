@@ -71,7 +71,7 @@ class BookingServiceTest {
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Booking booking = bookingService.create(tourist, 50L, 2,
-                List.of(new ParticipantForm("Ana", "Pérez")));
+                List.of(new ParticipantForm("Ana", "Pérez", "1995-03-20")));
 
         assertEquals(BookingStatus.PENDING, booking.getStatus());
         assertEquals(2, booking.getParticipantCount());
@@ -102,10 +102,66 @@ class BookingServiceTest {
     @Test
     void companionWithInvalidDataGetsAnErrorPerField() {
         var errors = bookingService.validateCompanions(tourist, 2,
-                List.of(new ParticipantForm("Ana3", "")));
+                List.of(new ParticipantForm("Ana3", "", "")));
 
         assertTrue(errors.containsKey("companions[0].firstName"));
         assertTrue(errors.containsKey("companions[0].lastName"));
+        assertTrue(errors.containsKey("companions[0].birthDate"));
+    }
+
+    // ===================== Edad mínima =====================
+    // La actividad es el 07/11/2026 y es para mayores de 12 años
+
+    @Test
+    void aCompanionUnderTheMinimumAgeIsRejected() {
+        activity.setMinimumAge(12);
+        tourist.setBirthDate(LocalDate.of(1990, 1, 1));
+
+        var errors = bookingService.validateParticipants(tourist, availability, 2, null,
+                List.of(new ParticipantForm("Tomás", "Pérez", "2016-05-10"))); // va a tener 10 años
+
+        assertTrue(errors.get("companions[0].birthDate").contains("12 años"));
+    }
+
+    @Test
+    void aCompanionWhoTurnsTheAgeBeforeTheActivityIsAccepted() {
+        activity.setMinimumAge(12);
+        tourist.setBirthDate(LocalDate.of(1990, 1, 1));
+
+        // Cumple 12 el 01/11/2026, antes de la actividad (07/11/2026)
+        var errors = bookingService.validateParticipants(tourist, availability, 2, null,
+                List.of(new ParticipantForm("Tomás", "Pérez", "2014-11-01")));
+
+        assertTrue(errors.isEmpty());
+    }
+
+    @Test
+    void theTouristMustAlsoHaveTheMinimumAge() {
+        activity.setMinimumAge(18);
+        tourist.setBirthDate(LocalDate.of(2010, 1, 1)); // va a tener 16
+
+        var errors = bookingService.validateParticipants(tourist, availability, 1, null, List.of());
+
+        assertTrue(errors.containsKey("holderBirthDate"));
+    }
+
+    @Test
+    void ifTheTouristHasNoBirthDateItIsAskedWhenThereIsAMinimumAge() {
+        activity.setMinimumAge(12);
+
+        var missing = bookingService.validateParticipants(tourist, availability, 1, null, List.of());
+        var given = bookingService.validateParticipants(tourist, availability, 1, "1990-06-15", List.of());
+
+        assertTrue(missing.containsKey("holderBirthDate"));
+        assertTrue(given.isEmpty());
+    }
+
+    @Test
+    void aBirthDateInTheFutureIsNotValid() {
+        var errors = bookingService.validateParticipants(tourist, availability, 2, null,
+                List.of(new ParticipantForm("Ana", "Pérez", "2030-01-01")));
+
+        assertEquals("La fecha de nacimiento no es válida", errors.get("companions[0].birthDate"));
     }
 
     @Test

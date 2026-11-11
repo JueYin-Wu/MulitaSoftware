@@ -34,4 +34,24 @@ public class PaymentMethod {
     @ManyToOne
     @JoinColumn(name = "tourist_id", nullable = false)
     private Tourist tourist;
+
+    // "Crédito" / "Débito"
+    public String getTypeLabel() {
+        return type == CardType.DEBIT ? "Débito" : "Crédito";
+    }
+
+    // "•••• 0604": nunca se muestra (ni se guarda) el número completo
+    public String getMaskedNumber() {
+        return "•••• " + lastDigits;
+    }
+
+    // "11/30"
+    public String getExpirationLabel() {
+        return expirationDate == null ? "-" : String.format("%02d/%02d", expirationDate.getMonthValue(), expirationDate.getYear() % 100);
+    }
+
+    // La tarjeta ya venció (después del último día del mes de vencimiento)
+    public boolean isExpired() {
+        return expirationDate != null && expirationDate.isBefore(java.time.YearMonth.now());
+    }
 }

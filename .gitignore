@@ -34,3 +34,7 @@ build/
 
 ### Fotos que suben los usuarios (no se suben a Git) ###
 uploads/
+
+### Claves secretas (Mercado Pago, etc.): nunca a Git ###
+secrets.properties
+.env

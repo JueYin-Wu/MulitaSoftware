@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Reservas')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/provider}">Mi portal</a>
+            <span aria-hidden="true">/</span>
+            <span>Reservas</span>
+        </nav>
+
+        <div class="panel-title panel-title-actions">
+            <div>
+                <h1>Reservas de mis actividades</h1>
+                <p>Quiénes van a cada salida, cuántos son y cómo contactarlos.</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm no-print" onclick="window.print()">🖨️ Imprimir lista</button>
+        </div>
+
+        <!-- Próximas / pasadas y filtro por actividad -->
+        <div class="schedule-toolbar no-print">
+            <nav class="tabs">
+                <a th:href="@{/provider/bookings(activity=${selectedActivity})}" class="tab" th:classappend="${!past} ? 'active'">Próximas</a>
+                <a th:href="@{/provider/bookings(when='past', activity=${selectedActivity})}" class="tab" th:classappend="${past} ? 'active'">Pasadas</a>
+            </nav>
+            <form th:action="@{/provider/bookings}" method="get" class="schedule-filter">
+                <input type="hidden" name="when" th:value="${past} ? 'past' : 'upcoming'">
+                <label for="activity" class="visually-hidden">Actividad</label>
+                <select id="activity" name="activity" onchange="this.form.submit()">
+                    <option value="">Todas mis actividades</option>
+                    <option th:each="a : ${activities}" th:value="${a.id}" th:text="${a.name}"
+                            th:selected="${selectedActivity != null and a.id == selectedActivity}">Actividad</option>
+                </select>
+            </form>
+        </div>
+
+        <!-- Resumen -->
+        <div class="stats-row" th:unless="${#lists.isEmpty(schedule)}">
+            <div class="stat"><strong th:text="${summary.dates}">3</strong><span th:text="${summary.dates == 1} ? 'fecha' : 'fechas'">fechas</span></div>
+            <div class="stat"><strong th:text="${summary.confirmedPeople}">12</strong><span th:text="${past} ? 'personas fueron' : 'personas confirmadas'">personas confirmadas</span></div>
+            <div class="stat" th:unless="${past}"><strong th:text="${summary.pendingBookings}">2</strong><span>reservas sin pagar</span></div>
+        </div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(schedule)}">
+            <h3 th:text="${past} ? 'Todavía no hay fechas pasadas' : 'No tenés fechas próximas publicadas'">Sin fechas</h3>
+            <p th:unless="${past}">Cuando agregues fechas a tus actividades y los turistas reserven, las reservas aparecen acá.</p>
+        </div>
+
+        <!-- Una tarjeta por fecha y horario -->
+        <article class="schedule-card" th:each="d : ${schedule}" th:with="date=${d.availability.date}">
+            <header class="schedule-head">
+                <div>
+                    <h2 th:text="${d.availability.activity.name}">Actividad</h2>
+                    <p class="schedule-when">
+                        <strong th:text="${d.dateLabel}">sábado 21/11/2026</strong>
+                        <span th:text="' · ' + ${#temporals.format(d.availability.time, 'HH:mm')} + ' h'">· 10:00 h</span>
+                        <span th:if="${forecasts.get(d.availability.id) != null}"> · <span th:replace="~{fragments/weather :: badge(${forecasts.get(d.availability.id)})}"></span></span>
+                    </p>
+                </div>
+                <div class="schedule-counts">
+                    <span class="chip chip-green" th:text="${d.confirmedPeople} + (${d.confirmedPeople == 1} ? ' confirmada' : ' confirmadas')">8 confirmadas</span>
+                    <span class="chip chip-orange" th:if="${d.pendingPeople > 0}" th:text="${d.pendingPeople} + ' sin pagar'">2 sin pagar</span>
+                    <span class="chip" th:text="${d.remaining} + ' de ' + ${d.availability.capacity} + ' libres'">5 de 15 libres</span>
+                </div>
+            </header>
+
+            <p class="muted" th:if="${d.empty}">Sin reservas todavía.</p>
+
+            <div class="table-wrap" th:unless="${d.empty}">
+                <table class="schedule-table">
+                    <thead>
+                    <tr><th>Turista</th><th>Contacto</th><th>Personas</th><th>Estado</th><th>Reservó</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="b : ${d.bookings}" th:classappend="${!b.active} ? 'row-inactive'">
+                        <td>
+                            <a th:href="@{/tourists/{id}(id=${b.tourist.id})}" th:text="${b.tourist.fullName}">Sofía Gómez</a>
+                            <span class="muted small" th:if="${b.tourist.getAgeAt(date) != null}" th:text="' · ' + ${b.tourist.getAgeAt(date)} + ' años'"> · 28 años</span>
+                        </td>
+                        <td class="contact">
+                            <a th:href="'tel:' + ${b.tourist.phone}" th:text="${b.tourist.phone}">091234567</a>
+                            <a th:href="'mailto:' + ${b.tourist.email}" th:text="${b.tourist.email}">sofia@ejemplo.com</a>
+                        </td>
+                        <td>
+                            <strong th:text="${b.participantCount}">3</strong>
+                            <ul class="companion-list" th:unless="${#lists.isEmpty(b.participants)}">
+                                <li th:each="p : ${b.participants}"
+                                    th:text="${p.firstName} + ' ' + ${p.lastName} + (${p.getAgeAt(date) != null} ? ' (' + ${p.getAgeAt(date)} + ' años)' : '')">Ana Pérez (9 años)</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <span class="chip" th:classappend="${b.status.name() == 'CONFIRMED'} ? 'chip-green' : (${b.status.name() == 'PENDING'} ? 'chip-orange' : 'chip-muted')"
+                                  th:text="${b.status.name() == 'CONFIRMED'} ? 'Pagada' : ${b.statusLabel}">Pagada</span>
+                            <span class="muted small" th:if="${b.payment != null and b.payment.refundedAmount != null}"
+                                  th:text="'Devuelto $ ' + ${#numbers.formatDecimal(b.payment.refundedAmount, 1, 'POINT', 0, 'COMMA')}">Devuelto</span>
+                        </td>
+                        <td class="small" th:text="${#temporals.format(b.bookingDate, 'dd/MM HH:mm')}">05/11 14:30</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <p class="hint no-print" th:unless="${#lists.isEmpty(schedule)}">
+            Las reservas <strong>sin pagar</strong> tienen los lugares guardados pero todavía no se confirmaron.
+        </p>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

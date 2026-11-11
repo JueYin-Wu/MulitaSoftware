@@ -50,6 +50,7 @@
 
                         <th:block th:if="${currentRole == 'PROVIDER'}">
                             <a th:href="@{/provider}">Mi portal</a>
+                            <a th:href="@{/provider/bookings}">Reservas</a>
                             <a th:href="@{/provider/activities}">Mis actividades</a>
                             <a th:href="@{/providers/{id}(id=${currentUser.id})}">Mi perfil público</a>
                         </th:block>

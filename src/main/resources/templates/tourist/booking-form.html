@@ -57,6 +57,21 @@
                         <p class="field-error" th:if="${participantError != null}" th:text="${participantError}"></p>
                     </div>
 
+                    <!-- Edad mínima de la actividad -->
+                    <p class="alert alert-info" th:if="${minimumAge != null}"
+                       th:text="'Esta actividad es para personas de ' + ${minimumAge} + ' años o más (cumplidos el día de la actividad). Te pedimos la fecha de nacimiento de cada persona.'">
+                        Edad mínima</p>
+
+                    <!-- Fecha de nacimiento del turista: solo si todavía no la tiene en su cuenta -->
+                    <div class="form-group" th:if="${askHolderBirthDate}">
+                        <label for="holderBirthDate">Tu fecha de nacimiento</label>
+                        <input type="date" id="holderBirthDate" name="holderBirthDate" th:value="${bookingForm.holderBirthDate}" th:max="${today}"
+                               th:classappend="${companionErrors != null and companionErrors.get('holderBirthDate') != null} ? 'is-invalid'">
+                        <p class="hint" th:text="${minimumAge != null} ? 'Se guarda en tu cuenta para la próxima vez.' : 'Opcional. Se guarda en tu cuenta para las actividades con edad mínima.'">Se guarda en tu cuenta</p>
+                    </div>
+                    <p class="field-error" th:if="${companionErrors != null and companionErrors.get('holderBirthDate') != null}"
+                       th:text="${companionErrors.get('holderBirthDate')}"></p>
+
                     <!-- Datos de los acompañantes: uno por cada persona además del turista.
                          Se muestran solo los que hacen falta según la cantidad (booking.js). -->
                     <div class="companions" id="companions" th:hidden="${participantCount <= 1}">
@@ -82,6 +97,13 @@
                                     <p class="field-error" th:if="${companionErrors != null and companionErrors.get(base + '.lastName') != null}" th:text="${companionErrors.get(base + '.lastName')}"></p>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label th:for="${base} + '-birthDate'">Fecha de nacimiento</label>
+                                <input type="date" th:id="${base} + '-birthDate'" th:name="${base} + '.birthDate'" th:value="${c.birthDate}" th:max="${today}"
+                                       th:classappend="${companionErrors != null and companionErrors.get(base + '.birthDate') != null} ? 'is-invalid'">
+                                <p class="field-error" th:if="${companionErrors != null and companionErrors.get(base + '.birthDate') != null}"
+                                   th:text="${companionErrors.get(base + '.birthDate')}"></p>
+                            </div>
                         </fieldset>
                     </div>
 
@@ -105,5 +127,6 @@
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script th:src="@{/js/booking.js}"></script>
+<script th:src="@{/js/date-input.js}"></script>
 </body>
 </html>

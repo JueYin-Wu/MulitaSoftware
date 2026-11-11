@@ -16,5 +16,7 @@ public class BookingForm {
 
     private Long availabilityId;
     private Integer participantCount = 1;
+    // Fecha de nacimiento del turista que reserva, solo si todavía no la tiene cargada en su cuenta
+    private String holderBirthDate;
     private List<ParticipantForm> companions = new ArrayList<>();
 }

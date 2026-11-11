@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Pagar reserva')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container narrow">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/tourist/bookings}">Mis reservas</a>
+            <span aria-hidden="true">/</span>
+            <span>Pagar</span>
+        </nav>
+
+        <div class="panel-title">
+            <h1 th:text="${booking.status.name() == 'CONFIRMED'} ? 'Reserva confirmada' : 'Pagar reserva'">Pagar reserva</h1>
+            <p>Pagás acá mismo, con tarjeta. Los datos de la tarjeta los procesa Mercado Pago de forma segura: Uruguay Mnatural nunca los ve ni los guarda.</p>
+        </div>
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+        <div class="alert alert-info" th:if="${warning}" th:text="${warning}">Aviso</div>
+
+        <div class="booking-layout">
+            <!-- Resumen -->
+            <section class="info-card booking-summary">
+                <img th:if="${activity.imageUrl != null}" th:src="@{${activity.imageUrl}}" th:alt="${activity.name}">
+                <h2 th:text="${activity.name}">Actividad</h2>
+                <p class="muted" th:text="${activity.provider.businessName}">Prestador</p>
+                <ul class="facts">
+                    <li><span class="fact-label">Fecha</span>
+                        <span th:text="${#temporals.format(booking.availability.date, 'dd/MM/yyyy')}">01/12/2026</span></li>
+                    <li><span class="fact-label">Hora</span>
+                        <span th:text="${#temporals.format(booking.availability.time, 'HH:mm')} + ' h'">10:00 h</span></li>
+                    <li><span class="fact-label">Clima previsto</span>
+                        <span th:replace="~{fragments/weather :: badge(${forecast})}"></span></li>
+                    <li><span class="fact-label">Personas</span>
+                        <span th:text="${booking.participantCount}">2</span></li>
+                    <li><span class="fact-label">Total</span>
+                        <strong th:text="'$ ' + ${#numbers.formatDecimal(booking.totalPrice, 1, 'POINT', 0, 'COMMA')}">$ 2.000</strong></li>
+                </ul>
+            </section>
+
+            <!-- Estado del pago -->
+            <section class="info-card payment-box"
+                     th:attr="data-status-url=@{/tourist/bookings/{id}/payment-status(id=${booking.id})},
+                              data-polling=${booking.status.name() == 'PENDING' and inProcess}">
+
+                <!-- Pagada y confirmada -->
+                <div th:if="${booking.status.name() == 'CONFIRMED'}" class="payment-state payment-ok">
+                    <div class="payment-icon">✓</div>
+                    <h2>¡Pago aprobado!</h2>
+                    <p>Tu reserva está confirmada. Te esperamos.</p>
+                    <ul class="facts" th:if="${payment != null}">
+                        <li><span class="fact-label">Operación</span><span th:text="${payment.externalReference}">123</span></li>
+                        <li th:if="${payment.paymentMethod != null}"><span class="fact-label">Tarjeta</span>
+                            <span th:text="(${payment.paymentMethod.type.name() == 'CREDIT'} ? 'Crédito' : 'Débito') + ' terminada en ' + ${payment.paymentMethod.lastDigits}">Crédito terminada en 0604</span></li>
+                    </ul>
+                    <a th:href="@{/tourist/bookings}" class="btn btn-primary btn-block btn-pill">Ver mis reservas</a>
+                </div>
+
+                <!-- Sin pagar -->
+                <th:block th:if="${booking.status.name() == 'PENDING'}">
+                    <!-- Esperando a Mercado Pago -->
+                    <div th:if="${inProcess}" class="payment-state">
+                        <div class="payment-icon payment-wait">⏳</div>
+                        <h2>Esperando la confirmación del pago</h2>
+                        <p>Tu pago está en revisión. Esta página se actualiza sola apenas haya una respuesta.</p>
+                    </div>
+
+                    <!-- Rechazado -->
+                    <div th:if="${payment != null and payment.status.name() == 'REJECTED'}" class="alert alert-error">
+                        <strong>El pago fue rechazado.</strong> <span th:text="${payment.rejectionReason} + '.'">Motivo</span>
+                        Podés intentarlo de nuevo con otra tarjeta.
+                    </div>
+
+                    <!-- Formulario de tarjeta (también para reintentar). Lo dibuja Mercado Pago dentro de nuestra página:
+                         el número de tarjeta va directo a Mercado Pago, que nos devuelve un token de un solo uso. -->
+                    <div th:if="${paymentsConfigured and !inProcess}"
+                         class="card-payment"
+                         th:attr="data-public-key=${publicKey},
+                                  data-amount=${booking.totalPrice},
+                                  data-email=${payerEmail},
+                                  data-pay-url=@{/tourist/bookings/{id}/card-payment(id=${booking.id})},
+                                  data-csrf-header=${_csrf.headerName},
+                                  data-csrf-token=${_csrf.token}">
+                        <h2 class="card-payment-title">Datos de la tarjeta</h2>
+                        <div class="alert alert-error" id="card-payment-error" hidden></div>
+                        <div id="cardPaymentBrick_container">
+                            <p class="hint text-center" id="card-payment-loading">Cargando el formulario de pago…</p>
+                        </div>
+                    </div>
+
+                    <div th:unless="${paymentsConfigured}" class="alert alert-info">
+                        Los pagos todavía no están configurados (faltan el Access Token y la Public Key de Mercado Pago).
+                    </div>
+
+                    <p class="hint">Tus lugares quedan guardados mientras la reserva está pendiente de pago.</p>
+
+                    <!-- Ayuda para probar (solo en modo de prueba) -->
+                    <details class="test-help" th:if="${@environment.getProperty('app.mercadopago.test-mode') == 'true'}">
+                        <summary>¿Cómo probar el pago?</summary>
+                        <p>Usá una <strong>tarjeta de prueba</strong> de Mercado Pago (no una tarjeta real), por ejemplo
+                            Mastercard <code>5031 7557 3453 0604</code>, vencimiento <code>11/30</code>, código <code>123</code>,
+                            documento CI <code>12345672</code>. El <strong>nombre del titular</strong> decide el resultado:</p>
+                        <ul>
+                            <li><code>APRO</code>: pago aprobado</li>
+                            <li><code>OTHE</code>: rechazado</li>
+                            <li><code>FUND</code>: rechazado por fondos insuficientes</li>
+                            <li><code>CONT</code>: queda pendiente</li>
+                        </ul>
+                    </details>
+                </th:block>
+
+                <!-- Cancelada o vencida -->
+                <div th:if="${booking.status.name() == 'CANCELLED' or booking.status.name() == 'EXPIRED'}" class="payment-state">
+                    <h2 th:text="'Reserva ' + ${booking.statusLabel.toLowerCase()}">Reserva cancelada</h2>
+                    <p>Esta reserva ya no se puede pagar.</p>
+                    <a th:href="@{/activities/{id}(id=${activity.id})}" class="btn btn-outline btn-block btn-pill">Ver la actividad</a>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+<script th:src="@{/js/payment.js}"></script>
+</body>
+</html>

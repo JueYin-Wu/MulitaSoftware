@@ -62,6 +62,7 @@ public class UserService {
                 .phone(DocumentValidator.onlyDigits(form.getPhone()))
                 .documentType(documentType)
                 .idDocument(idDocument)
+                .birthDate(DocumentValidator.parseBirthDate(form.getBirthDate()))
                 .build();
 
         return userRepository.save(tourist);
@@ -84,6 +85,12 @@ public class UserService {
             i++;
         }
         return username;
+    }
+
+    // Guarda la fecha de nacimiento de un turista que todavía no la tenía (se pide al reservar)
+    public void updateBirthDate(Tourist tourist, java.time.LocalDate birthDate) {
+        tourist.setBirthDate(birthDate);
+        userRepository.save(tourist);
     }
 
     // Cambia (o quita, si newImageUrl es null) la foto de perfil y borra el archivo anterior

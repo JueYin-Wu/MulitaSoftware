@@ -42,7 +42,7 @@ public class ProviderController {
         return "provider/home";
     }
 
-    // Sube una foto de perfil nueva (JPG, PNG o WEBP, hasta 2 MB)
+    // Sube una foto de perfil nueva (JPG, PNG o WEBP, hasta 10 MB)
     @PostMapping("/profile-image")
     public String uploadProfileImage(@RequestParam("image") MultipartFile image,
                                      Authentication authentication,

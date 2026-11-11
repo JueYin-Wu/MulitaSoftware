@@ -14,6 +14,7 @@ import uy.edu.um.porytic2026.repository.BookingRepository;
 import uy.edu.um.porytic2026.validation.DocumentValidator;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -74,6 +75,13 @@ public class BookingService {
     @Transactional
     public Booking create(Tourist tourist, Long availabilityId, Integer participantCount,
                           List<ParticipantForm> companions) {
+        return create(tourist, availabilityId, participantCount, companions, null);
+    }
+
+    // Igual, con la fecha de nacimiento del turista si todavía no la tiene en su cuenta
+    @Transactional
+    public Booking create(Tourist tourist, Long availabilityId, Integer participantCount,
+                          List<ParticipantForm> companions, String holderBirthDate) {
         // Se bloquea la fecha mientras se reserva, para que dos reservas al mismo tiempo no superen el cupo
         Availability availability = availabilityRepository.findByIdForUpdate(availabilityId)
                 .orElseThrow(() -> new BusinessException("La fecha elegida no existe"));
@@ -97,15 +105,16 @@ public class BookingService {
             throw new BusinessException("Ya tenés una reserva para esa fecha. La podés ver en \"Mis reservas\".");
         }
 
-        // Los datos de los acompañantes son obligatorios y tienen que ser válidos
-        if (!validateCompanions(tourist, participantCount, companions).isEmpty()) {
-            throw new BusinessException("companions", "Revisá los datos de los acompañantes");
+        // Los datos de todas las personas son obligatorios, válidos y cumplen la edad mínima de la actividad
+        if (!validateParticipants(tourist, availability, participantCount, holderBirthDate, companions).isEmpty()) {
+            throw new BusinessException("companions", "Revisá los datos de las personas que van");
         }
 
         Booking booking = Booking.builder()
                 .tourist(tourist)
                 .availability(availability)
                 .participantCount(participantCount)
+                .unitPrice(availability.getActivity().getPrice()) // queda fijo aunque después cambie el precio
                 .status(BookingStatus.PENDING)
                 .bookingDate(LocalDateTime.now(clock))
                 .build();
@@ -115,16 +124,49 @@ public class BookingService {
                     .booking(booking)
                     .firstName(data.getFirstName().trim())
                     .lastName(data.getLastName().trim())
+                    .birthDate(DocumentValidator.parseBirthDate(data.getBirthDate()))
                     .build());
         }
         return bookingRepository.save(booking);
     }
 
-    // Revisa los datos de cada acompañante (nombre y apellido, como en el MER). Devuelve campo -> mensaje
-    // de error, por ejemplo "companions[0].firstName" -> "Ingresá el nombre". Si está todo bien, queda vacío.
+    // Revisa los datos de los acompañantes sin controlar edades (no se sabe la fecha de la actividad)
     public Map<String, String> validateCompanions(Tourist tourist, Integer participantCount,
                                                   List<ParticipantForm> companions) {
+        return validateParticipants(tourist, null, participantCount, null, companions);
+    }
+
+    // Revisa los datos de todas las personas de la reserva. Devuelve campo -> mensaje de error, por ejemplo
+    // "companions[0].birthDate" -> "Esta actividad es para personas de 12 años o más...". Si está todo bien, queda vacío.
+    //  - Acompañantes: nombre, apellido y fecha de nacimiento (obligatorios).
+    //  - Si la actividad tiene edad mínima, todos (el turista y cada acompañante) la tienen que tener
+    //    EL DÍA DE LA ACTIVIDAD. Si el turista todavía no cargó su fecha de nacimiento, se pide en el formulario.
+    public Map<String, String> validateParticipants(Tourist tourist, Availability availability, Integer participantCount,
+                                                    String holderBirthDate, List<ParticipantForm> companions) {
         Map<String, String> errors = new LinkedHashMap<>();
+        LocalDate today = LocalDate.now(clock);
+        Integer minimumAge = availability == null || availability.getActivity() == null
+                ? null : availability.getActivity().getMinimumAge();
+        boolean checkAge = minimumAge != null && minimumAge > 0;
+        LocalDate activityDay = availability == null ? null : availability.getDate();
+
+        // El turista que reserva
+        if (checkAge) {
+            LocalDate holderBirth = tourist.getBirthDate();
+            if (holderBirth == null) {
+                String problem = DocumentValidator.birthDateProblem(holderBirthDate, today);
+                if (problem != null) {
+                    errors.put("holderBirthDate", problem.replace("Ingresá la", "Ingresá tu"));
+                } else {
+                    holderBirth = DocumentValidator.parseBirthDate(holderBirthDate);
+                }
+            }
+            if (holderBirth != null && DocumentValidator.ageOn(holderBirth, activityDay) < minimumAge) {
+                errors.put("holderBirthDate", "Esta actividad es para personas de " + minimumAge
+                        + " años o más y el día de la actividad vas a tener " + DocumentValidator.ageOn(holderBirth, activityDay));
+            }
+        }
+
         int needed = participantCount == null ? 0 : Math.max(0, participantCount - 1);
         for (int i = 0; i < needed; i++) {
             String field = "companions[" + i + "].";
@@ -136,6 +178,16 @@ public class BookingService {
             }
             if (!DocumentValidator.isValidName(data.getLastName())) {
                 errors.put(field + "lastName", "Ingresá el apellido (solo letras)");
+            }
+            String birthProblem = DocumentValidator.birthDateProblem(data.getBirthDate(), today);
+            if (birthProblem != null) {
+                errors.put(field + "birthDate", birthProblem);
+            } else if (checkAge) {
+                int age = DocumentValidator.ageOn(DocumentValidator.parseBirthDate(data.getBirthDate()), activityDay);
+                if (age < minimumAge) {
+                    errors.put(field + "birthDate", "Esta actividad es para personas de " + minimumAge
+                            + " años o más y esta persona va a tener " + age);
+                }
             }
         }
         return errors;
@@ -193,6 +245,9 @@ public class BookingService {
     // ===================== Métodos auxiliares =====================
 
     private void checkBookingOpen(Availability availability) {
+        if (availability.getActivity() != null && !availability.getActivity().isPublished()) {
+            throw new BusinessException("Esta actividad ya no está disponible");
+        }
         LocalDateTime now = LocalDateTime.now(clock);
         if (!now.isBefore(availability.getStartDateTime())) {
             throw new BusinessException("Esa fecha ya pasó");

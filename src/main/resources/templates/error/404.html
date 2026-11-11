@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('No encontramos esta página')}"></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="panel-page">
+    <div class="container narrow">
+        <div class="empty-state error-page">
+            <h1>No encontramos esta página</h1>
+            <p>Puede que la dirección esté mal escrita o que lo que buscabas ya no exista.</p>
+            <div class="error-actions">
+                <a href="javascript:history.back()" class="btn btn-primary btn-pill">← Volver</a>
+                <a th:href="@{/}" class="btn btn-outline btn-pill">Ir al inicio</a>
+            </div>
+        </div>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

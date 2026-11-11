@@ -21,4 +21,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // Reseñas de las actividades realizadas entre dos fechas (API: top 3 del mes)
     List<Review> findByBookingAvailabilityDateBetween(LocalDate from, LocalDate to);
+
+    // ¿Esa reserva ya tiene reseña? (una por reserva)
+    boolean existsByBookingId(Long bookingId);
 }

@@ -26,7 +26,7 @@
             <!-- Solo el dueño del perfil puede cambiar su foto -->
             <div class="profile-photo-actions" th:if="${isOwner}">
                 <h2>Foto de perfil</h2>
-                <p class="muted">JPG, PNG o WEBP, hasta 2 MB.</p>
+                <p class="muted">JPG, PNG o WEBP, hasta 10 MB.</p>
                 <form th:action="@{/tourist/profile-image(${_csrf.parameterName}=${_csrf.token})}" method="post"
                       enctype="multipart/form-data" class="upload-form">
                     <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
@@ -36,6 +36,29 @@
                     <button type="submit" class="btn btn-outline btn-sm">Quitar foto</button>
                 </form>
             </div>
+        </section>
+
+        <!-- Medios de pago guardados: solo los ve el propio turista -->
+        <section class="detail-section profile-block" th:if="${isOwner}">
+            <h2>Mis medios de pago</h2>
+            <p class="muted" th:if="${#lists.isEmpty(paymentMethods)}">
+                Todavía no tenés tarjetas guardadas. Se guardan solas cuando pagás una reserva con tarjeta.</p>
+            <ul class="card-list" th:unless="${#lists.isEmpty(paymentMethods)}">
+                <li class="saved-card" th:each="m : ${paymentMethods}">
+                    <span class="card-chip" aria-hidden="true">💳</span>
+                    <div class="saved-card-info">
+                        <strong th:text="${m.typeLabel} + ' ' + ${m.maskedNumber}">Crédito •••• 0604</strong>
+                        <span class="muted" th:text="'Vence ' + ${m.expirationLabel}">Vence 11/30</span>
+                    </div>
+                    <span class="chip chip-danger" th:if="${m.expired}">Vencida</span>
+                    <form th:action="@{/tourist/payment-methods/{id}/delete(id=${m.id})}" method="post"
+                          onsubmit="return confirm('¿Quitar esta tarjeta?')">
+                        <button type="submit" class="btn btn-outline btn-sm">Quitar</button>
+                    </form>
+                </li>
+            </ul>
+            <p class="hint">Por seguridad solo guardamos el tipo, los últimos 4 dígitos y el vencimiento. Los datos
+                completos de la tarjeta los maneja Mercado Pago.</p>
         </section>
 
         <!-- Próximas reservas: solo las ve el propio turista -->
@@ -90,5 +113,6 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
+<script th:src="@{/js/file-size-check.js}"></script>
 </body>
 </html>

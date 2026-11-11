@@ -52,7 +52,7 @@ public class PublicApiService {
                     List<Review> reviews = reviewRepository.findByBookingAvailabilityActivityProviderIdOrderByIdDesc(provider.getId());
                     return new ProviderResponse(provider.getId(), provider.getBusinessName(), typeOf(provider),
                             provider.getServiceDescription(), provider.getAddress(),
-                            activityRepository.findByProviderId(provider.getId()).size(),
+                            (int) activityRepository.findByProviderId(provider.getId()).stream().filter(Activity::isPublished).count(),
                             average(reviews), "/providers/" + provider.getId());
                 })
                 .toList();
@@ -85,6 +85,9 @@ public class PublicApiService {
         // Se agrupan los horarios por actividad, manteniendo el orden por hora
         Map<Activity, List<SlotResponse>> byActivity = new LinkedHashMap<>();
         for (Availability availability : availabilityRepository.findByDateOrderByTimeAsc(day)) {
+            if (!availability.getActivity().isPublished()) {
+                continue;
+            }
             Location location = availability.getActivity().getLocation();
             if (location == null || !departmentName.equals(location.getDepartment())) {
                 continue;
@@ -111,7 +114,8 @@ public class PublicApiService {
         Map<Activity, List<Integer>> ratings = new HashMap<>();
         for (Review review : reviewRepository.findByBookingAvailabilityDateBetween(yearMonth.atDay(1), yearMonth.atEndOfMonth())) {
             Activity activity = review.getBooking().getAvailability().getActivity();
-            if (activity.getLocation() != null && departmentName.equals(activity.getLocation().getDepartment())) {
+            if (activity.isPublished() && activity.getLocation() != null
+                    && departmentName.equals(activity.getLocation().getDepartment())) {
                 ratings.computeIfAbsent(activity, a -> new ArrayList<>()).add(review.getRating());
             }
         }
@@ -137,7 +141,7 @@ public class PublicApiService {
         }
         String q = keyword.trim();
         return activityRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrderByNameAsc(q, q)
-                .stream().map(this::toActivity).toList();
+                .stream().filter(Activity::isPublished).map(this::toActivity).toList();
     }
 
     // ===================== Conversión a JSON =====================

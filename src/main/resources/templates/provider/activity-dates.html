@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Fechas y cupos')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container narrow">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/provider}">Mi portal</a>
+            <span aria-hidden="true">/</span>
+            <a th:href="@{/provider/activities}">Mis actividades</a>
+            <span aria-hidden="true">/</span>
+            <span>Fechas y cupos</span>
+        </nav>
+
+        <div class="panel-title">
+            <h1 th:text="'Fechas de «' + ${activity.name} + '»'">Fechas</h1>
+            <p>Cada fecha y horario tiene su propio cupo. Los turistas solo pueden reservar las fechas que cargues acá.</p>
+        </div>
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+        <div class="alert alert-info" th:unless="${activity.published}">
+            Esta actividad está dada de baja: las fechas no se muestran a los turistas hasta que la vuelvas a publicar.
+        </div>
+
+        <!-- Agregar fecha -->
+        <section class="info-card">
+            <h2>Agregar fecha</h2>
+            <form th:action="@{/provider/activities/{id}/dates(id=${activity.id})}" method="post" class="date-form">
+                <div class="form-group">
+                    <label for="date">Fecha</label>
+                    <input type="date" id="date" name="date" th:min="${today}" th:value="${newDate}" required>
+                </div>
+                <div class="form-group">
+                    <label for="time">Hora de inicio</label>
+                    <input type="time" id="time" name="time" th:value="${newTime}" required>
+                </div>
+                <div class="form-group">
+                    <label for="capacity">Cupo (personas)</label>
+                    <input type="number" id="capacity" name="capacity" min="1" th:max="${maxCapacity}"
+                           th:value="${newCapacity != null} ? ${newCapacity} : 10" required>
+                </div>
+                <div class="form-group">
+                    <label for="repeatWeeks">Repetir</label>
+                    <select id="repeatWeeks" name="repeatWeeks">
+                        <option value="1">Solo esa fecha</option>
+                        <option th:each="w : ${#numbers.sequence(2, maxWeeks)}" th:value="${w}" th:text="'Todas las semanas, ' + ${w} + ' semanas'"
+                                th:selected="${newRepeat != null and newRepeat == w}">Todas las semanas</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Agregar</button>
+            </form>
+            <p class="hint">Si una actividad se hace varias veces por semana (por ejemplo, martes y sábados), agregá una fecha
+                para cada día con la opción "Repetir". Las fechas que ya existen no se duplican.</p>
+        </section>
+
+        <!-- Próximas fechas -->
+        <section class="detail-section profile-block">
+            <h2 th:text="'Próximas fechas (' + ${#lists.size(rows)} + ')'">Próximas fechas</h2>
+            <p class="muted" th:if="${#lists.isEmpty(rows)}">Todavía no hay fechas: los turistas no pueden reservar esta actividad.</p>
+            <div class="table-wrap" th:unless="${#lists.isEmpty(rows)}">
+                <table class="schedule-table">
+                    <thead>
+                    <tr><th>Fecha</th><th>Hora</th><th>Reservados</th><th>Cupo</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${rows}">
+                        <td class="capitalize" th:text="${r.dateLabel}">sábado 21/11/2026</td>
+                        <td th:text="${#temporals.format(r.availability.time, 'HH:mm')} + ' h'">10:00 h</td>
+                        <td th:text="${r.booked} + ' (' + ${r.remaining} + ' libres)'">3 (7 libres)</td>
+                        <td>
+                            <form th:action="@{/provider/activities/{id}/dates/{d}/capacity(id=${activity.id}, d=${r.availability.id})}"
+                                  method="post" class="capacity-form">
+                                <input type="number" name="capacity" th:value="${r.availability.capacity}" th:min="${r.booked > 0 ? r.booked : 1}"
+                                       th:max="${maxCapacity}" aria-label="Cupo">
+                                <button type="submit" class="btn btn-outline btn-sm">Guardar</button>
+                            </form>
+                        </td>
+                        <td class="slot-action">
+                            <form th:unless="${r.hasBookings}"
+                                  th:action="@{/provider/activities/{id}/dates/{d}/delete(id=${activity.id}, d=${r.availability.id})}"
+                                  method="post" class="inline-form" onsubmit="return confirm('¿Eliminar esta fecha?')">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                            <a th:if="${r.hasBookings}" th:href="@{/provider/bookings(activity=${activity.id})}" class="muted small"
+                               title="Una fecha con reservas no se puede eliminar">Ver reservas</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <p><a th:href="@{/provider/activities}">← Volver a mis actividades</a></p>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/date-input.js}"></script>
+</body>
+</html>

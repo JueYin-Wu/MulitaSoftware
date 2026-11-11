@@ -97,6 +97,16 @@ public class Activity {
     }
 
     // Textos para mostrar los minutos de forma legible ("2 horas", "1 día")
+    // Estado: publicada (la ven los turistas y se puede reservar) o dada de baja por el prestador.
+    // Una actividad con reservas no se borra: se da de baja, así se conservan sus reservas, pagos y reseñas.
+    // Null = publicada (las actividades que ya estaban en la base antes de agregar este campo).
+    @Column(name = "active")
+    private Boolean active;
+
+    public boolean isPublished() {
+        return active == null || active;
+    }
+
     public String getBookingDeadlineLabel() {
         return formatMinutes(bookingDeadline);
     }

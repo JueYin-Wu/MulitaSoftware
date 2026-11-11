@@ -36,6 +36,9 @@
                     <div class="request-head">
                         <div>
                             <h3 th:text="${a.name}">Actividad</h3>
+                            <span class="chip chip-danger" th:unless="${a.published}">Dada de baja</span>
+                            <span class="chip chip-orange" th:if="${a.published and upcomingDates.get(a.id) == 0}"
+                                  title="Sin fechas no se puede reservar">Sin fechas próximas</span>
                             <span class="chip chip-cyan" th:text="${a.location?.department}">Departamento</span>
                             <th:block th:each="tag : ${a.tags}">
                                 <span class="chip chip-green" th:if="${tag.status.name() == 'APPROVED'}" th:text="${tag.name}">Tipo</span>
@@ -53,7 +56,17 @@
                     </dl>
 
                     <div class="request-actions">
+                        <a th:href="@{/provider/activities/{id}/dates(id=${a.id})}" class="btn btn-primary btn-sm"
+                           th:text="'Fechas y cupos (' + ${upcomingDates.get(a.id)} + ')'">Fechas y cupos</a>
+                        <a th:href="@{/provider/activities/{id}/edit(id=${a.id})}" class="btn btn-outline btn-sm">Editar</a>
                         <a th:href="@{/activities/{id}(id=${a.id})}" class="btn btn-outline btn-sm">Ver como turista</a>
+                        <form th:if="${a.published}" th:action="@{/provider/activities/{id}/unpublish(id=${a.id})}" method="post" class="inline-form"
+                              onsubmit="return confirm('¿Dar de baja esta actividad? Deja de verse en el portal y no se puede reservar. Las reservas ya hechas siguen valiendo.')">
+                            <button type="submit" class="btn btn-danger btn-sm">Dar de baja</button>
+                        </form>
+                        <form th:unless="${a.published}" th:action="@{/provider/activities/{id}/publish(id=${a.id})}" method="post" class="inline-form">
+                            <button type="submit" class="btn btn-outline btn-sm">Volver a publicar</button>
+                        </form>
                     </div>
                 </div>
             </article>

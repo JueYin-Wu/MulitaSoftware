@@ -22,7 +22,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // Páginas públicas: cualquiera puede verlas sin iniciar sesión
-                        .requestMatchers("/", "/activities", "/activities/**", "/providers/**", "/tourists/**", "/login", "/register/**", "/forgot-password", "/reset-password", "/error").permitAll()
+                        .requestMatchers("/", "/activities", "/activities/**", "/providers/**", "/tourists/**", "/login", "/register/**", "/forgot-password", "/reset-password", "/error", "/webhooks/**").permitAll()
                         // Archivos estáticos (estilos, scripts, imágenes)
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                         // Consola de la base de datos H2 (solo para desarrollo)
@@ -63,7 +63,7 @@ public class SecurityConfig {
                 )
                 .logout(logout -> logout.logoutSuccessUrl("/"))
                 // La consola H2 necesita estas dos excepciones para funcionar
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**", "/webhooks/**"))
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();

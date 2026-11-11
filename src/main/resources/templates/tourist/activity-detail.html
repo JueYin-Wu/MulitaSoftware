@@ -38,6 +38,7 @@
             <aside class="detail-summary">
                 <span class="chip chip-cyan" th:text="${activity.location?.department}">Departamento</span>
                 <h1 th:text="${activity.name}">Nombre de la actividad</h1>
+                <p class="alert alert-info" th:unless="${activity.published}">Esta actividad ya no está disponible para reservar.</p>
                 <a class="detail-provider" th:href="@{/providers/{id}(id=${activity.provider.id})}">
                     <span th:replace="~{fragments/avatar :: avatar(${activity.provider}, 'sm')}"></span>
                     <span>Ofrecida por <strong th:text="${activity.provider.businessName}">Emprendimiento</strong></span>
@@ -134,12 +135,13 @@
                     <div class="table-wrap" th:unless="${#lists.isEmpty(slots)}">
                         <table class="slots">
                             <thead>
-                            <tr><th>Fecha</th><th>Hora</th><th>Lugares libres</th><th></th></tr>
+                            <tr><th>Fecha</th><th>Hora</th><th>Clima previsto</th><th>Lugares libres</th><th></th></tr>
                             </thead>
                             <tbody>
                             <tr th:each="slot : ${slots}">
                                 <td th:text="${slot.dateLabel}">Sábado 25 de octubre</td>
                                 <td th:text="${#temporals.format(slot.availability.time, 'HH:mm')} + ' h'">10:00 h</td>
+                                <td><span th:replace="~{fragments/weather :: badge(${forecasts.get(slot.availability.date)})}"></span></td>
                                 <td>
                                     <span th:if="${slot.soldOut}" class="chip chip-danger">Sin lugares</span>
                                     <span th:unless="${slot.soldOut}" th:text="${slot.remaining} + ' de ' + ${slot.availability.capacity}">15 de 15</span>
@@ -157,6 +159,9 @@
                         </table>
                     </div>
                     <p class="muted" th:if="${#lists.isEmpty(slots)}">Por ahora no hay fechas publicadas.</p>
+                    <p class="hint weather-source" th:unless="${#lists.isEmpty(slots)}">
+                        Pronóstico de <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>
+                        para el lugar de la actividad. Aparece unos 15 días antes de cada fecha.</p>
                 </section>
 
                 <section class="detail-section">

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('La foto es demasiado grande')}"></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="panel-page">
+    <div class="container narrow">
+        <div class="empty-state error-page">
+            <h1>La foto es demasiado grande</h1>
+            <p>Cada foto puede pesar hasta 10 MB. Volvé atrás y elegí una foto más liviana (por ejemplo, sacala con menos resolución o mandátela por WhatsApp y descargala de nuevo, que la achica).</p>
+            <div class="error-actions">
+                <a href="javascript:history.back()" class="btn btn-primary btn-pill">← Volver</a>
+                <a th:href="@{/}" class="btn btn-outline btn-pill">Ir al inicio</a>
+            </div>
+        </div>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

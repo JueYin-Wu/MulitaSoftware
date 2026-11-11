@@ -23,5 +23,5 @@ COPY --from=build /build/target/*.jar app.jar
 # Carpeta donde se guardan las fotos que suben los usuarios (en docker-compose se conecta a ./uploads)
 RUN mkdir -p /app/uploads
 
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

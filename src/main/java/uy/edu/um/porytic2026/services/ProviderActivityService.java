@@ -67,6 +67,7 @@ public class ProviderActivityService {
         try {
             Activity activity = new Activity();
             activity.setProvider(provider);
+            activity.setActive(true);
             copyFormToActivity(form, activity);
             activity.setTags(resolveTags(form, provider));
             // La primera foto es la de la tarjeta y todas forman el carrusel de la página de la actividad
@@ -83,7 +84,109 @@ public class ProviderActivityService {
         }
     }
 
+    // Una actividad del prestador (si no existe o es de otro prestador, error)
+    public Activity findOwn(Provider provider, Long activityId) {
+        return activityRepository.findById(activityId)
+                .filter(a -> a.getProvider() != null && a.getProvider().getId().equals(provider.getId()))
+                .orElseThrow(() -> new BusinessException("La actividad no existe o no es tuya"));
+    }
+
+    // Formulario precargado con los datos actuales de la actividad (para editarla)
+    public ActivityForm toForm(Activity activity) {
+        ActivityForm form = new ActivityForm();
+        form.setName(activity.getName());
+        form.setDescription(activity.getDescription());
+        form.setPrice(activity.getPrice());
+        form.setDurationMinutes(activity.getDurationMinutes());
+        form.setMinimumAge(activity.getMinimumAge() == null || activity.getMinimumAge() == 0 ? null : activity.getMinimumAge());
+        form.setRequirements(activity.getRequirements());
+        if (activity.getLocation() != null) {
+            form.setDepartment(activity.getLocation().getDepartment());
+            form.setNeighborhood(activity.getLocation().getNeighborhood());
+            form.setStreet(activity.getLocation().getStreet());
+            form.setNumber(activity.getLocation().getNumber());
+        }
+        form.setBookingDeadline(activity.getBookingDeadline() == null ? 0 : activity.getBookingDeadline());
+        form.setRefundable(Boolean.TRUE.equals(activity.getRefundable()));
+        form.setCancellationMinutes(activity.getCancellationMinutes());
+        form.setRefundPercentage(activity.getRefundPercentage());
+        form.setTagIds(new ArrayList<>(safe(activity.getTags()).stream()
+                .filter(t -> t.getStatus() == TagStatus.APPROVED).map(Tag::getId).toList()));
+        List<ActivityEquipment> equipment = activityEquipmentRepository.findByActivityId(activity.getId());
+        form.setProvidedEquipmentIds(new ArrayList<>(equipment.stream()
+                .filter(e -> e.getRole() == EquipmentRole.PROVIDED).map(e -> e.getEquipment().getId()).toList()));
+        form.setRequiredEquipmentIds(new ArrayList<>(equipment.stream()
+                .filter(e -> e.getRole() == EquipmentRole.REQUIRED).map(e -> e.getEquipment().getId()).toList()));
+        return form;
+    }
+
+    // Editar una actividad. Las reservas ya hechas no cambian: guardan su propio precio (Booking.unitPrice).
+    // Fotos: si se suben fotos nuevas reemplazan a las actuales; si no, quedan las que había.
+    @Transactional
+    public Activity update(Provider provider, Long activityId, ActivityForm form, List<MultipartFile> photos) {
+        Activity activity = findOwn(provider, activityId);
+        validate(form);
+        List<MultipartFile> files = selectedFiles(photos);
+        if (files.size() > MAX_PHOTOS) {
+            throw new BusinessException("photos", "Podés subir hasta " + MAX_PHOTOS + " fotos");
+        }
+
+        Location previous = activity.getLocation();
+        List<String> oldImages = new ArrayList<>(safe(activity.getImages()));
+        List<String> newImages = storePhotos(provider, files);
+        try {
+            copyFormToActivity(form, activity);
+            // Si la dirección no cambió, se conservan las coordenadas del mapa y del clima
+            if (previous != null && sameAddress(previous, activity.getLocation())) {
+                activity.getLocation().setLatitude(previous.getLatitude());
+                activity.getLocation().setLongitude(previous.getLongitude());
+            }
+            activity.setTags(resolveTags(form, provider));
+            if (!newImages.isEmpty()) {
+                activity.setImageUrl(newImages.get(0));
+                activity.setImages(new ArrayList<>(newImages));
+            }
+            Activity saved = activityRepository.save(activity);
+
+            // Equipamiento: se reemplaza por lo elegido ahora
+            activityEquipmentRepository.deleteAll(activityEquipmentRepository.findByActivityId(saved.getId()));
+            saveEquipment(saved, form);
+
+            if (!newImages.isEmpty()) {
+                oldImages.forEach(fileStorageService::delete); // las fotos viejas ya no se usan
+            }
+            return saved;
+        } catch (RuntimeException e) {
+            newImages.forEach(fileStorageService::delete);
+            throw e;
+        }
+    }
+
+    // Dar de baja: deja de verse en el portal y no se puede reservar. No se borra: se conservan sus
+    // reservas, pagos y reseñas. Las reservas que ya estaban hechas siguen valiendo.
+    @Transactional
+    public Activity unpublish(Provider provider, Long activityId) {
+        Activity activity = findOwn(provider, activityId);
+        activity.setActive(false);
+        return activityRepository.save(activity);
+    }
+
+    // Volver a publicar una actividad dada de baja
+    @Transactional
+    public Activity publish(Provider provider, Long activityId) {
+        Activity activity = findOwn(provider, activityId);
+        activity.setActive(true);
+        return activityRepository.save(activity);
+    }
+
     // ===================== Métodos auxiliares =====================
+
+    private static boolean sameAddress(Location a, Location b) {
+        return java.util.Objects.equals(a.getDepartment(), b.getDepartment())
+                && java.util.Objects.equals(a.getNeighborhood(), b.getNeighborhood())
+                && java.util.Objects.equals(a.getStreet(), b.getStreet())
+                && java.util.Objects.equals(a.getNumber(), b.getNumber());
+    }
 
     // Reglas que no se pueden expresar con las anotaciones del formulario
     private void validate(ActivityForm form) {

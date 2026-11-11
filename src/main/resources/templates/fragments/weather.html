@@ -1,0 +1,16 @@
+<!-- Pronóstico del clima de un día. Uso: <span th:replace="~{fragments/weather :: badge(${pronostico})}"></span>
+     Si no hay pronóstico (fecha a más de 16 días, o la API no respondió) muestra un guion. -->
+<span th:fragment="badge(forecast)" class="weather"
+      th:classappend="${forecast != null and forecast.rainy} ? 'weather-rain'"
+      th:title="${forecast != null}
+              ? ${forecast.description} + (${forecast.rainProbability != null} ? ' · ' + ${forecast.rainProbability} + ' % de probabilidad de lluvia' : '')
+              : 'El pronóstico aparece unos 15 días antes de la fecha'">
+    <th:block th:if="${forecast != null}">
+        <span class="weather-icon" aria-hidden="true" th:text="${forecast.icon}">☀️</span>
+        <span th:text="${forecast.temperatures}">24° / 15°</span>
+        <span class="weather-rain-chance" th:if="${forecast.rainProbability != null and forecast.rainProbability >= 30}"
+              th:text="'💧 ' + ${forecast.rainProbability} + ' %'">💧 60 %</span>
+        <span class="visually-hidden" th:text="${forecast.description}">Despejado</span>
+    </th:block>
+    <span th:unless="${forecast != null}" class="muted">—</span>
+</span>
