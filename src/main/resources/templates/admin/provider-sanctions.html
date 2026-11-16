@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Sanciones')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container narrow">
+        <div th:replace="~{fragments/admin-nav :: nav('providers')}"></div>
+
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{/admin/providers(status='APPROVED')}">Prestadores</a>
+            <span aria-hidden="true">/</span>
+            <span th:text="${provider.businessName}">Emprendimiento</span>
+            <span aria-hidden="true">/</span>
+            <span>Sanciones</span>
+        </nav>
+
+        <div class="panel-title">
+            <h1>Sanciones</h1>
+            <p>
+                <strong th:text="${provider.businessName}">Emprendimiento</strong>
+                <span class="chip chip-danger" th:if="${provider.suspended}">Suspendido</span>
+                <span class="chip chip-green" th:if="${provider.active}">Activo</span>
+            </p>
+        </div>
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+
+        <!-- Suspensión vigente: se puede levantar -->
+        <section class="info-card sanction-alert" th:if="${provider.suspended}">
+            <h2>Suspensión vigente</h2>
+            <p class="muted">Mientras esté suspendido no puede iniciar sesión, sus actividades no se muestran a los turistas
+                y no se pueden hacer reservas nuevas. Las reservas que ya tenía se mantienen.</p>
+            <form th:action="@{/admin/providers/{id}/sanctions/lift(id=${provider.id})}" method="post">
+                <button type="submit" class="btn btn-primary btn-sm">Levantar suspensión</button>
+            </form>
+        </section>
+
+        <!-- Aplicar una sanción nueva (solo a prestadores aprobados) -->
+        <section class="info-card" th:if="${provider.status.name() == 'APPROVED'}">
+            <h2>Aplicar sanción</h2>
+            <form th:action="@{/admin/providers/{id}/sanctions(id=${provider.id})}" method="post" novalidate>
+                <div class="alert alert-error" th:if="${formError}" th:text="${formError}">Error</div>
+
+                <fieldset class="sanction-types">
+                    <legend>Tipo</legend>
+                    <label class="check-item">
+                        <input type="radio" name="type" value="WARNING" th:checked="${selectedType?.name() == 'WARNING'}">
+                        <span><strong>Advertencia</strong><br><small class="muted">Queda registrada y el prestador la ve en su portal. Sigue operando normalmente.</small></span>
+                    </label>
+                    <label class="check-item" th:classappend="${provider.suspended} ? 'is-disabled'">
+                        <input type="radio" name="type" value="SUSPENSION" th:checked="${selectedType?.name() == 'SUSPENSION'}"
+                               th:disabled="${provider.suspended}">
+                        <span><strong>Suspensión</strong><br><small class="muted">No puede iniciar sesión y sus actividades dejan de mostrarse hasta que se levante.</small></span>
+                    </label>
+                </fieldset>
+
+                <div class="form-group">
+                    <label for="reason">Motivo</label>
+                    <textarea id="reason" name="reason" rows="4" th:attr="maxlength=${maxReasonLength}" th:text="${reason}"
+                              placeholder="Ej: varios turistas reportaron que la actividad del 07/11 no se realizó y no se les avisó."></textarea>
+                    <p class="hint">El prestador va a ver este motivo. La fecha se guarda automáticamente.</p>
+                </div>
+
+                <button type="submit" class="btn btn-danger">Aplicar sanción</button>
+            </form>
+        </section>
+
+        <p class="alert alert-info" th:unless="${provider.status.name() == 'APPROVED'}">
+            Solo se puede sancionar a prestadores aprobados.
+        </p>
+
+        <!-- Historial -->
+        <section class="detail-section">
+            <h2>Historial</h2>
+            <p class="muted" th:if="${#lists.isEmpty(sanctions)}">Este prestador no tiene sanciones.</p>
+            <ul class="sanction-list" th:unless="${#lists.isEmpty(sanctions)}">
+                <li class="sanction-item" th:each="s : ${sanctions}">
+                    <div class="sanction-head">
+                        <span class="chip" th:classappend="${s.type.name() == 'SUSPENSION'} ? 'chip-danger' : 'chip-orange'"
+                              th:text="${s.type.label}">Tipo</span>
+                        <span class="chip chip-muted" th:if="${s.type.name() == 'SUSPENSION' and s.liftedDate != null}"
+                              th:text="'Levantada el ' + ${#temporals.format(s.liftedDate, 'dd/MM/yyyy HH:mm')}">Levantada</span>
+                        <span class="chip chip-danger" th:if="${s.activeSuspension}">Vigente</span>
+                        <span class="muted" th:text="${#temporals.format(s.date, 'dd/MM/yyyy HH:mm')} + ' · ' + ${s.administrator.fullName}">Fecha</span>
+                    </div>
+                    <p th:text="${s.reason}">Motivo</p>
+                </li>
+            </ul>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

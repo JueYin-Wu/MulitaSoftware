@@ -47,12 +47,13 @@ public class PublicApiService {
     // 1) Listado de todos los emprendimientos (solo los aprobados: los pendientes o rechazados no son públicos)
     public List<ProviderResponse> listProviders() {
         return providerRepository.findByStatusOrderByRegistrationDateAsc(ProviderStatus.APPROVED).stream()
+                .filter(provider -> !provider.isSuspended())
                 .sorted(Comparator.comparing(Provider::getBusinessName, String.CASE_INSENSITIVE_ORDER))
                 .map(provider -> {
                     List<Review> reviews = reviewRepository.findByBookingAvailabilityActivityProviderIdOrderByIdDesc(provider.getId());
                     return new ProviderResponse(provider.getId(), provider.getBusinessName(), typeOf(provider),
                             provider.getServiceDescription(), provider.getAddress(),
-                            (int) activityRepository.findByProviderId(provider.getId()).stream().filter(Activity::isPublished).count(),
+                            (int) activityRepository.findByProviderId(provider.getId()).stream().filter(Activity::isVisibleToTourists).count(),
                             average(reviews), "/providers/" + provider.getId());
                 })
                 .toList();
@@ -85,7 +86,7 @@ public class PublicApiService {
         // Se agrupan los horarios por actividad, manteniendo el orden por hora
         Map<Activity, List<SlotResponse>> byActivity = new LinkedHashMap<>();
         for (Availability availability : availabilityRepository.findByDateOrderByTimeAsc(day)) {
-            if (!availability.getActivity().isPublished()) {
+            if (!availability.getActivity().isVisibleToTourists()) {
                 continue;
             }
             Location location = availability.getActivity().getLocation();
@@ -114,7 +115,7 @@ public class PublicApiService {
         Map<Activity, List<Integer>> ratings = new HashMap<>();
         for (Review review : reviewRepository.findByBookingAvailabilityDateBetween(yearMonth.atDay(1), yearMonth.atEndOfMonth())) {
             Activity activity = review.getBooking().getAvailability().getActivity();
-            if (activity.isPublished() && activity.getLocation() != null
+            if (activity.isVisibleToTourists() && activity.getLocation() != null
                     && departmentName.equals(activity.getLocation().getDepartment())) {
                 ratings.computeIfAbsent(activity, a -> new ArrayList<>()).add(review.getRating());
             }
@@ -141,7 +142,7 @@ public class PublicApiService {
         }
         String q = keyword.trim();
         return activityRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrderByNameAsc(q, q)
-                .stream().filter(Activity::isPublished).map(this::toActivity).toList();
+                .stream().filter(Activity::isVisibleToTourists).map(this::toActivity).toList();
     }
 
     // ===================== Conversión a JSON =====================
@@ -162,8 +163,9 @@ public class PublicApiService {
         // El RUT de una empresa es un dato público; la cédula de una persona física no se expone
         String taxId = provider instanceof JuridicProvider juridic ? juridic.getTaxId() : null;
         return new VerificationResponse(provider.getId(), provider.getBusinessName(), typeOf(provider),
-                provider.getStatus() == null ? null : provider.getStatus().name(),
-                provider.getStatus() == ProviderStatus.APPROVED, taxId,
+                // Un prestador suspendido se informa como SUSPENDED y no habilitado
+                provider.isSuspended() ? "SUSPENDED" : (provider.getStatus() == null ? null : provider.getStatus().name()),
+                provider.isActive(), taxId,
                 provider.getRegistrationDate() == null ? null : provider.getRegistrationDate().toLocalDate().toString());
     }
 

@@ -1,0 +1,24 @@
+<!-- Botones de página para una lista larga.
+     Uso: <nav th:replace="~{fragments/pagination :: pagination(${pageResult}, ${pageBaseUrl})}"></nav>
+     pageBaseUrl es la dirección actual con los filtros pero sin "page" (la arma el controller),
+     así al cambiar de página se mantienen la búsqueda, los filtros y el orden. -->
+<nav th:fragment="pagination(pageResult, baseUrl)" class="pagination" aria-label="Páginas"
+     th:if="${pageResult.paginated}"
+     th:with="sep=${baseUrl.contains('?')} ? '&' : '?'">
+
+    <a th:unless="${pageResult.first}" class="page-link"
+       th:href="${baseUrl + sep + 'page=' + (pageResult.page - 1)} + '#resultados'" rel="prev">‹ Anterior</a>
+    <span th:if="${pageResult.first}" class="page-link disabled" aria-hidden="true">‹ Anterior</span>
+
+    <th:block th:each="n : ${pageResult.pageNumbers}">
+        <span th:if="${n == 0}" class="page-gap" aria-hidden="true">…</span>
+        <span th:if="${n == pageResult.page}" class="page-link current" aria-current="page" th:text="${n}">1</span>
+        <a th:if="${n != 0 and n != pageResult.page}" class="page-link"
+           th:href="${baseUrl + sep + 'page=' + n} + '#resultados'"
+           th:text="${n}" th:attr="aria-label='Página ' + ${n}">2</a>
+    </th:block>
+
+    <a th:unless="${pageResult.last}" class="page-link"
+       th:href="${baseUrl + sep + 'page=' + (pageResult.page + 1)} + '#resultados'" rel="next">Siguiente ›</a>
+    <span th:if="${pageResult.last}" class="page-link disabled" aria-hidden="true">Siguiente ›</span>
+</nav>

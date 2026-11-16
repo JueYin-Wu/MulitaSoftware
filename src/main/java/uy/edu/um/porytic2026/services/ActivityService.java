@@ -101,9 +101,9 @@ public class ActivityService {
         return published(activityRepository.findByLocationDepartment(department));
     }
 
-    // Deja solo las publicadas
+    // Deja solo las que ven los turistas (publicadas y de un prestador que no está suspendido)
     private static List<Activity> published(List<Activity> activities) {
-        return activities.stream().filter(Activity::isPublished).toList();
+        return activities.stream().filter(Activity::isVisibleToTourists).toList();
     }
 
     // Búsqueda por texto y/o departamento (solo publicadas). Si los dos están vacíos, devuelve todas.

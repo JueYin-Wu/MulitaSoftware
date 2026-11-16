@@ -14,6 +14,10 @@
             <!-- Mensajes según el parámetro que pone SecurityConfig en la URL -->
             <div class="alert alert-success" th:if="${param.reset}">Tu contraseña se cambió. Ya podés iniciar sesión con la nueva.</div>
             <div class="alert alert-error" th:if="${param.error}">Usuario o contraseña incorrectos.</div>
+            <div class="alert alert-error" th:if="${param.suspended}">
+                Tu cuenta de prestador está suspendida por la administración. Mientras dure la suspensión no podés
+                iniciar sesión y tus actividades no se muestran. Si pensás que es un error, comunicate con la administración.
+            </div>
             <div class="alert alert-warning" th:if="${param.pending}">
                 Tu cuenta de prestador todavía no está habilitada. Un administrador tiene que aprobar tu solicitud.
             </div>

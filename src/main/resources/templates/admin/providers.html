@@ -23,11 +23,14 @@
             <a th:href="@{/admin/providers(status='PENDING')}" class="tab" th:classappend="${status.name() == 'PENDING'} ? 'active'">
                 Pendientes <span class="count" th:text="${pendingCount}">0</span>
             </a>
-            <a th:href="@{/admin/providers(status='APPROVED')}" class="tab" th:classappend="${status.name() == 'APPROVED'} ? 'active'">
+            <a th:href="@{/admin/providers(status='APPROVED')}" class="tab" th:classappend="${status.name() == 'APPROVED' and !showSuspended} ? 'active'">
                 Aprobados <span class="count" th:text="${approvedCount}">0</span>
             </a>
             <a th:href="@{/admin/providers(status='REJECTED')}" class="tab" th:classappend="${status.name() == 'REJECTED'} ? 'active'">
                 Rechazados <span class="count" th:text="${rejectedCount}">0</span>
+            </a>
+            <a th:href="@{/admin/providers(suspended=true)}" class="tab" th:classappend="${showSuspended} ? 'active'">
+                Suspendidos <span class="count" th:text="${suspendedCount}">0</span>
             </a>
         </nav>
 
@@ -43,7 +46,8 @@
                         <h3 th:text="${p.businessName}">Emprendimiento</h3>
                         <span class="chip chip-cyan" th:text="${p.typeLabel}">Tipo</span>
                         <span class="chip chip-amber" th:if="${status.name() == 'PENDING'}">Pendiente</span>
-                        <span class="chip chip-green" th:if="${status.name() == 'APPROVED'}">Aprobado</span>
+                        <span class="chip chip-green" th:if="${status.name() == 'APPROVED' and !p.suspended}">Aprobado</span>
+                        <span class="chip chip-danger" th:if="${p.suspended}">Suspendido</span>
                         <span class="chip chip-danger" th:if="${status.name() == 'REJECTED'}">Rechazado</span>
                     </div>
                     <span class="request-date" th:if="${p.registrationDate != null}"
@@ -64,6 +68,12 @@
                         <dt>Motivo del rechazo</dt><dd th:text="${p.rejectionReason}">Motivo</dd>
                     </div>
                 </dl>
+
+                <!-- Prestadores aprobados: ver sus sanciones o aplicar una nueva -->
+                <div class="request-actions" th:if="${status.name() == 'APPROVED'}">
+                    <a th:href="@{/admin/providers/{id}/sanctions(id=${p.id})}" class="btn btn-outline btn-sm"
+                       th:text="${p.suspended} ? 'Ver suspensión' : 'Sanciones'">Sanciones</a>
+                </div>
 
                 <!-- Acciones: solo para solicitudes pendientes -->
                 <div class="request-actions" th:if="${status.name() == 'PENDING'}">

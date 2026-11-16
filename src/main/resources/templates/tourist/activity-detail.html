@@ -38,11 +38,16 @@
             <aside class="detail-summary">
                 <span class="chip chip-cyan" th:text="${activity.location?.department}">Departamento</span>
                 <h1 th:text="${activity.name}">Nombre de la actividad</h1>
-                <p class="alert alert-info" th:unless="${activity.published}">Esta actividad ya no está disponible para reservar.</p>
-                <a class="detail-provider" th:href="@{/providers/{id}(id=${activity.provider.id})}">
+                <p class="alert alert-info" th:unless="${activity.visibleToTourists}">Esta actividad ya no está disponible para reservar.</p>
+                <!-- Si el prestador está suspendido, su perfil no es público: se muestra el nombre sin enlace -->
+                <a class="detail-provider" th:href="@{/providers/{id}(id=${activity.provider.id})}" th:if="${activity.provider.active}">
                     <span th:replace="~{fragments/avatar :: avatar(${activity.provider}, 'sm')}"></span>
                     <span>Ofrecida por <strong th:text="${activity.provider.businessName}">Emprendimiento</strong></span>
                 </a>
+                <span class="detail-provider" th:unless="${activity.provider.active}">
+                    <span th:replace="~{fragments/avatar :: avatar(${activity.provider}, 'sm')}"></span>
+                    <span>Ofrecida por <strong th:text="${activity.provider.businessName}">Emprendimiento</strong></span>
+                </span>
 
                 <div class="rating" th:if="${averageRating != null}">
                     <span class="stars" th:attr="aria-label='Valoración ' + ${#numbers.formatDecimal(averageRating, 1, 'POINT', 1, 'COMMA')} + ' de 5'">

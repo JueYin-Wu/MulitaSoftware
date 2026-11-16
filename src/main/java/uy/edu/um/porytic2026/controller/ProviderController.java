@@ -14,6 +14,7 @@ import uy.edu.um.porytic2026.services.FileStorageService;
 import uy.edu.um.porytic2026.services.ProviderService;
 import uy.edu.um.porytic2026.services.UserService;
 import uy.edu.um.porytic2026.services.ProviderActivityService;
+import uy.edu.um.porytic2026.services.SanctionService;
 
 // Portal del proveedor. Solo entra el rol PROVIDER (proveedores aprobados).
 @Controller
@@ -24,14 +25,17 @@ public class ProviderController {
     private final ProviderService providerService;
     private final FileStorageService fileStorageService;
     private final ProviderActivityService providerActivityService;
+    private final SanctionService sanctionService;
 
     public ProviderController(UserService userService, ProviderService providerService,
                               FileStorageService fileStorageService,
-                              ProviderActivityService providerActivityService) {
+                              ProviderActivityService providerActivityService,
+                              SanctionService sanctionService) {
         this.userService = userService;
         this.providerService = providerService;
         this.fileStorageService = fileStorageService;
         this.providerActivityService = providerActivityService;
+        this.sanctionService = sanctionService;
     }
 
     @GetMapping
@@ -39,6 +43,8 @@ public class ProviderController {
         Provider provider = currentProvider(authentication);
         model.addAttribute("provider", provider);
         model.addAttribute("activityCount", providerActivityService.findByProvider(provider).size());
+        // Advertencias y suspensiones anteriores que le aplicó la administración
+        model.addAttribute("sanctions", sanctionService.findByProvider(provider.getId()));
         return "provider/home";
     }
 

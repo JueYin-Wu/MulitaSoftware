@@ -107,6 +107,12 @@ public class Activity {
         return active == null || active;
     }
 
+    // Se muestra a los turistas y se puede reservar: el prestador no la dio de baja,
+    // y el prestador está aprobado y no tiene una suspensión vigente
+    public boolean isVisibleToTourists() {
+        return isPublished() && provider != null && provider.isActive();
+    }
+
     public String getBookingDeadlineLabel() {
         return formatMinutes(bookingDeadline);
     }

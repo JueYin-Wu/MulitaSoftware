@@ -36,6 +36,7 @@ class BookingServiceTest {
 
     private Tourist tourist;
     private Activity activity;
+    private Provider provider;
     private Availability availability;
 
     @BeforeEach
@@ -51,6 +52,11 @@ class BookingServiceTest {
         activity.setName("Kayak al atardecer");
         activity.setPrice(1000.0);
         activity.setBookingDeadline(60); // se puede reservar hasta 1 hora antes
+        // Toda actividad es de un prestador; tiene que estar aprobado y sin suspensión para que se pueda reservar
+        provider = new FisicProvider();
+        provider.setId(20L);
+        provider.setStatus(ProviderStatus.APPROVED);
+        activity.setProvider(provider);
 
         // Fecha dentro de dos semanas, con 10 lugares
         availability = Availability.builder()
@@ -207,7 +213,7 @@ class BookingServiceTest {
         availability.setTime(LocalTime.of(12, 30));
         when(availabilityRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(availability));
 
-        assertThrows(BusinessException.class, () -> bookingService.create(tourist, 50L, 1));
+        assertThrows(BusinessException.class, () -> bookingService.create(tourist, 50L, 1, List.of()));
         verify(bookingRepository, never()).save(any());
     }
 
@@ -231,7 +237,7 @@ class BookingServiceTest {
         availability.setDate(LocalDate.of(2026, 10, 20));
         when(availabilityRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(availability));
 
-        assertThrows(BusinessException.class, () -> bookingService.create(tourist, 50L, 1));
+        assertThrows(BusinessException.class, () -> bookingService.create(tourist, 50L, 1, List.of()));
         verify(bookingRepository, never()).save(any());
     }
 
@@ -242,7 +248,7 @@ class BookingServiceTest {
         when(bookingRepository.existsByTouristIdAndAvailabilityIdAndStatusIn(eq(5L), eq(50L), anyCollection()))
                 .thenReturn(true);
 
-        assertThrows(BusinessException.class, () -> bookingService.create(tourist, 50L, 1));
+        assertThrows(BusinessException.class, () -> bookingService.create(tourist, 50L, 1, List.of()));
         verify(bookingRepository, never()).save(any());
     }
 
@@ -321,6 +327,71 @@ class BookingServiceTest {
         activity.setRefundable(false);
         activity.setCancellationMinutes(1440);
         assertFalse(bookingService.isRefundableNow(booking));
+    }
+
+    @Test
+    void createWhenTheProviderIsSuspendedIsRejected() {
+        // Un prestador suspendido por la administración no puede recibir reservas nuevas
+        provider.setSuspended(true);
+        when(availabilityRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(availability));
+
+        assertThrows(BusinessException.class, () -> bookingService.create(tourist, 50L, 1, List.of()));
+        verify(bookingRepository, never()).save(any());
+    }
+
+    // ===================== Plazo para pagar =====================
+
+    @Test
+    void createSetsAPaymentDeadlineOfThirtyMinutes() {
+        when(availabilityRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(availability));
+        when(bookingRepository.countParticipants(eq(50L), anyCollection())).thenReturn(0L);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking booking = bookingService.create(tourist, 50L, 1, List.of());
+
+        assertEquals(NOW.plusMinutes(30), booking.getPaymentDeadline());
+    }
+
+    @Test
+    void paymentDeadlineNeverGoesPastTheBookingClose() {
+        // Empieza hoy a las 12:20 y se puede reservar hasta la hora de inicio: el plazo es 12:20, no 12:30
+        activity.setBookingDeadline(0);
+        availability.setDate(NOW.toLocalDate());
+        availability.setTime(LocalTime.of(12, 20));
+        when(availabilityRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(availability));
+        when(bookingRepository.countParticipants(eq(50L), anyCollection())).thenReturn(0L);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Booking booking = bookingService.create(tourist, 50L, 1, List.of());
+
+        assertEquals(LocalDateTime.of(2026, 10, 24, 12, 20), booking.getPaymentDeadline());
+    }
+
+    @Test
+    void aPendingBookingIsOverdueOnceTheDeadlinePasses() {
+        Booking booking = Booking.builder().id(7L).tourist(tourist).availability(availability)
+                .participantCount(1).status(BookingStatus.PENDING).bookingDate(NOW.minusMinutes(40)).build();
+
+        booking.setPaymentDeadline(NOW.minusMinutes(1));
+        assertTrue(bookingService.isPaymentOverdue(booking));
+
+        booking.setPaymentDeadline(NOW.plusMinutes(1));
+        assertFalse(bookingService.isPaymentOverdue(booking));
+
+        // Una reserva confirmada nunca se vence, aunque haya pasado el plazo
+        booking.setPaymentDeadline(NOW.minusMinutes(1));
+        booking.setStatus(BookingStatus.CONFIRMED);
+        assertFalse(bookingService.isPaymentOverdue(booking));
+    }
+
+    @Test
+    void oldBookingsWithoutDeadlineUseTheBookingDatePlusThePaymentMinutes() {
+        // Reserva hecha antes de que existiera el vencimiento: no tiene plazo guardado
+        Booking booking = Booking.builder().id(7L).tourist(tourist).availability(availability)
+                .participantCount(1).status(BookingStatus.PENDING).bookingDate(NOW.minusMinutes(31)).build();
+
+        assertEquals(NOW.minusMinutes(1), bookingService.paymentDeadlineOf(booking));
+        assertTrue(bookingService.isPaymentOverdue(booking));
     }
 
     // ===================== Métodos auxiliares =====================

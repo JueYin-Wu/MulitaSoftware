@@ -65,6 +65,11 @@ class PaymentServiceTest {
         activity.setId(1L);
         activity.setName("Kayak al atardecer");
         activity.setPrice(1000.0);
+        // Toda actividad es de un prestador; tiene que estar aprobado y sin suspensión para que se pueda pagar
+        Provider provider = new FisicProvider();
+        provider.setId(20L);
+        provider.setStatus(ProviderStatus.APPROVED);
+        activity.setProvider(provider);
         activity.setBookingDeadline(60);
 
         Availability availability = Availability.builder()
@@ -268,6 +273,17 @@ class PaymentServiceTest {
         empty.setToken(" ");
 
         assertThrows(BusinessException.class, () -> paymentService.payWithCard(12L, tourist, empty));
+        verify(mercadoPago, never()).createPayment(anyMap());
+    }
+
+    @Test
+    void anOverdueBookingCannotBePaid() {
+        // Se le pasó el plazo para pagar: no se cobra (en un minuto la tarea automática la vence)
+        when(bookingRepository.findById(12L)).thenReturn(Optional.of(booking));
+        when(mercadoPago.searchPayments("booking-12")).thenReturn(List.of());
+        when(bookingService.isPaymentOverdue(booking)).thenReturn(true);
+
+        assertThrows(BusinessException.class, () -> paymentService.payWithCard(12L, tourist, card()));
         verify(mercadoPago, never()).createPayment(anyMap());
     }
 
