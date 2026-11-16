@@ -36,11 +36,16 @@ public class MercadoPagoClient {
     private final RestClient restClient;
     private final String accessToken;
     private final String publicKey;
+    // Modo de prueba: Mercado Pago exige que vendedor y comprador sean los dos cuentas de prueba,
+    // así que el pago se manda con el email de la cuenta de prueba COMPRADORA
+    private final String testPayerEmail;
 
     public MercadoPagoClient(@Value("${app.mercadopago.api-url:https://api.mercadopago.com}") String apiUrl,
                              @Value("${app.mercadopago.access-token:}") String accessToken,
                              @Value("${app.mercadopago.public-key:}") String publicKey,
-                             @Value("${app.mercadopago.timeout-seconds:10}") int timeoutSeconds) {
+                             @Value("${app.mercadopago.timeout-seconds:10}") int timeoutSeconds,
+                             @Value("${app.mercadopago.test-mode:false}") boolean testMode,
+                             @Value("${app.mercadopago.test-payer-email:}") String testPayerEmail) {
         // Tiempo máximo para conectar y para esperar la respuesta: si Mercado Pago no contesta, no nos quedamos colgados
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(timeoutSeconds))
@@ -54,6 +59,15 @@ public class MercadoPagoClient {
                 .build();
         this.accessToken = accessToken == null ? "" : accessToken.trim();
         this.publicKey = publicKey == null ? "" : publicKey.trim();
+        this.testPayerEmail = testMode && testPayerEmail != null ? testPayerEmail.trim() : "";
+
+        // Al arrancar se muestra en la consola con qué cuenta de Mercado Pago se va a cobrar (sin mostrar las claves):
+        // el último número del Access Token es el ID del usuario vendedor.
+        String sellerId = this.accessToken.contains("-") ? this.accessToken.substring(this.accessToken.lastIndexOf('-') + 1) : "?";
+        log.info("Mercado Pago: vendedor (User ID) {} | Public Key {} | comprador de prueba {}",
+                this.accessToken.isBlank() ? "SIN ACCESS TOKEN" : sellerId,
+                this.publicKey.isBlank() ? "FALTA" : this.publicKey.substring(0, Math.min(16, this.publicKey.length())) + "...",
+                this.testPayerEmail.isBlank() ? "-" : this.testPayerEmail);
     }
 
     // ¿Se cargó el Access Token? Sin él no se puede cobrar.
@@ -66,17 +80,30 @@ public class MercadoPagoClient {
         return publicKey;
     }
 
+    // Email de la cuenta de prueba compradora (vacío si no se está en modo de prueba)
+    public String getTestPayerEmail() {
+        return testPayerEmail;
+    }
+
     // POST /v1/payments -> cobra con el token de la tarjeta (Checkout API: el turista paga en NUESTRA página).
     // El token lo genera el formulario de Mercado Pago en el navegador: el número de tarjeta nunca pasa por nuestro servidor.
     // La clave de idempotencia es la misma en el reintento, así un reintento nunca cobra dos veces.
+    @SuppressWarnings("unchecked")
     public GatewayPayment createPayment(Map<String, Object> payment) {
+        if (!testPayerEmail.isBlank() && payment.get("payer") instanceof Map<?, ?> payer) {
+            Map<String, Object> testPayer = new java.util.LinkedHashMap<>((Map<String, Object>) payer);
+            testPayer.put("email", testPayerEmail);
+            payment = new java.util.LinkedHashMap<>(payment);
+            payment.put("payer", testPayer);
+        }
+        Map<String, Object> body = payment;
         String idempotencyKey = UUID.randomUUID().toString();
-        Map<String, Object> response = call(() -> restClient.post()
+        Map<String, Object> response = call("cobrar (POST /v1/payments)", () -> restClient.post()
                 .uri("/v1/payments")
                 .header("Authorization", "Bearer " + accessToken)
                 .header("X-Idempotency-Key", idempotencyKey)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(payment)
+                .body(body)
                 .retrieve()
                 .body(Map.class));
         return toPayment(response);
@@ -84,7 +111,7 @@ public class MercadoPagoClient {
 
     // GET /v1/payments/search -> pagos hechos con nuestra referencia, del más nuevo al más viejo
     public List<GatewayPayment> searchPayments(String externalReference) {
-        Map<String, Object> response = call(() -> restClient.get()
+        Map<String, Object> response = call("buscar pagos (GET /v1/payments/search)", () -> restClient.get()
                 .uri(uri -> uri.path("/v1/payments/search")
                         .queryParam("external_reference", externalReference)
                         .queryParam("sort", "date_created")
@@ -110,7 +137,7 @@ public class MercadoPagoClient {
     // respuesta, Mercado Pago reconoce el reintento y NO devuelve el dinero dos veces.
     public GatewayRefund refund(String paymentId, BigDecimal amount) {
         String idempotencyKey = UUID.randomUUID().toString();
-        Map<String, Object> response = call(() -> restClient.post()
+        Map<String, Object> response = call("devolver (POST /v1/payments/{id}/refunds)", () -> restClient.post()
                 .uri("/v1/payments/{id}/refunds", paymentId)
                 .header("Authorization", "Bearer " + accessToken)
                 .header("X-Idempotency-Key", idempotencyKey)
@@ -123,7 +150,7 @@ public class MercadoPagoClient {
 
     // GET /v1/payments/{id} -> un pago (se usa cuando Mercado Pago nos avisa por webhook)
     public GatewayPayment getPayment(String paymentId) {
-        Map<String, Object> response = call(() -> restClient.get()
+        Map<String, Object> response = call("consultar pago (GET /v1/payments/{id})", () -> restClient.get()
                 .uri("/v1/payments/{id}", paymentId)
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
@@ -134,7 +161,16 @@ public class MercadoPagoClient {
     // ===================== Manejo de errores y reintentos =====================
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Map<String, Object> call(Supplier<Map> request) {
+    // Motivo que explica Mercado Pago en su respuesta de error (el campo "message"), para mostrarlo
+    private static String reason(String body) {
+        if (body == null) {
+            return "";
+        }
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"message\"\\s*:\\s*\"([^\"]{1,200})\"").matcher(body);
+        return m.find() ? " (Mercado Pago dice: " + m.group(1) + ")" : "";
+    }
+
+    private Map<String, Object> call(String operation, Supplier<Map> request) {
         if (!isConfigured()) {
             throw new PaymentGatewayException("Falta configurar el Access Token de Mercado Pago");
         }
@@ -152,10 +188,13 @@ public class MercadoPagoClient {
                     log.warn("Mercado Pago respondió {} (intento {} de {})", code, attempt, MAX_ATTEMPTS);
                     lastError = new PaymentGatewayUnavailableException("Mercado Pago no está disponible (" + code + ")", e);
                 } else if (code == 401 || code == 403) {
-                    throw new PaymentGatewayException("Las credenciales de Mercado Pago no son válidas", e);
+                    log.warn("Mercado Pago rechazó las credenciales al {} ({}): {}", operation, code, e.getResponseBodyAsString());
+                    throw new PaymentGatewayException("Las credenciales de Mercado Pago no son válidas"
+                            + reason(e.getResponseBodyAsString()), e);
                 } else {
-                    log.warn("Mercado Pago rechazó el pedido ({}): {}", code, e.getResponseBodyAsString());
-                    throw new PaymentGatewayException("Mercado Pago rechazó el pedido (" + code + ")", e);
+                    log.warn("Mercado Pago rechazó el pedido al {} ({}): {}", operation, code, e.getResponseBodyAsString());
+                    throw new PaymentGatewayException("Mercado Pago rechazó el pedido (" + code + ")"
+                            + reason(e.getResponseBodyAsString()), e);
                 }
             } catch (ResourceAccessException e) {
                 // No hubo conexión, o Mercado Pago tardó más que el tiempo máximo

@@ -66,6 +66,7 @@ public class DataLoader implements CommandLineRunner {
                 });
 
         if (userRepository.count() > 0) {
+            refreshDemoDates();
             return; // si ya hay datos, no carga de nuevo
         }
 
@@ -229,6 +230,21 @@ public class DataLoader implements CommandLineRunner {
         saveReview(sofia, kayakRocha, 10, 5, "Increíble la puesta de sol. Los guías muy atentos y el equipo en perfecto estado.");
         saveReview(sofia, casapueblo, 20, 4, "Muy linda visita, la ceremonia del sol vale la pena. Había bastante gente.");
         saveReview(sofia, ciudadVieja, 30, 5, "Aprendí un montón de historia de Montevideo. Muy recomendable.");
+    }
+
+    // Las fechas de ejemplo se crean una sola vez (a 3, 7 y 14 días de ese momento), así que con el tiempo
+    // quedan todas en el pasado. En cada arranque, a las actividades del prestador de prueba que se quedaron
+    // sin fechas futuras se les crean fechas nuevas. Las actividades de los demás prestadores no se tocan.
+    private void refreshDemoDates() {
+        userRepository.findByUsername("prestador").ifPresent(demoProvider -> {
+            for (Activity activity : activityRepository.findByProviderId(demoProvider.getId())) {
+                if (availabilityRepository.countByActivityIdAndDateGreaterThanEqual(activity.getId(), LocalDate.now()) == 0) {
+                    saveAvailability(activity, 3, LocalTime.of(10, 0), 15);
+                    saveAvailability(activity, 7, LocalTime.of(17, 30), 12);
+                    saveAvailability(activity, 14, LocalTime.of(10, 0), 20);
+                }
+            }
+        });
     }
 
     private Tag saveTag(String name) {

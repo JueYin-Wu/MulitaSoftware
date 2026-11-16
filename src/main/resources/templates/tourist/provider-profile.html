@@ -29,6 +29,9 @@
                 <p class="muted" th:if="${provider.registrationDate != null}"
                    th:text="'En Uruguay Mnatural desde ' + ${#temporals.format(provider.registrationDate, 'MM/yyyy')}">Desde</p>
             </div>
+            <div class="profile-head-actions" th:if="${isOwner}">
+                <a th:href="@{/profile/edit}" class="btn btn-primary btn-pill">Editar perfil</a>
+            </div>
         </section>
 
         <div class="detail-body">

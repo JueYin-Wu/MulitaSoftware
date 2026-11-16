@@ -7,34 +7,28 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import uy.edu.um.porytic2026.entities.Tourist;
 import uy.edu.um.porytic2026.entities.PaymentMethod;
 import uy.edu.um.porytic2026.exceptions.BusinessException;
-import uy.edu.um.porytic2026.services.FileStorageService;
 import uy.edu.um.porytic2026.services.PaymentMethodService;
 import uy.edu.um.porytic2026.services.TouristService;
 import uy.edu.um.porytic2026.services.UserService;
 
 // Perfil de un turista. Se llega haciendo clic en su nombre en una reseña.
-// /tourists/{id} lo ve cualquiera; /tourist/... solo el turista que inició sesión (para cambiar su foto).
+// /tourists/{id} lo ve cualquiera; /tourist/... solo el turista que inició sesión. Para editarlo: ProfileController.
 @Controller
 public class TouristProfileController {
 
     private final TouristService touristService;
     private final UserService userService;
-    private final FileStorageService fileStorageService;
     private final PaymentMethodService paymentMethodService;
 
     public TouristProfileController(TouristService touristService, UserService userService,
-                                    FileStorageService fileStorageService,
                                     PaymentMethodService paymentMethodService) {
         this.touristService = touristService;
         this.userService = userService;
-        this.fileStorageService = fileStorageService;
         this.paymentMethodService = paymentMethodService;
     }
 
@@ -47,7 +41,7 @@ public class TouristProfileController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el turista");
         }
 
-        // ¿Es su propio perfil? Entonces puede cambiar la foto y ver sus próximas reservas
+        // ¿Es su propio perfil? Entonces ve el botón "Editar perfil" y sus próximas reservas
         boolean isOwner = authentication != null && tourist.getUsername().equals(authentication.getName());
 
         model.addAttribute("tourist", tourist);
@@ -66,29 +60,6 @@ public class TouristProfileController {
     @GetMapping("/tourist")
     public String myProfile(Authentication authentication) {
         return "redirect:/tourists/" + currentTourist(authentication).getId();
-    }
-
-    @PostMapping("/tourist/profile-image")
-    public String uploadProfileImage(@RequestParam("image") MultipartFile image,
-                                     Authentication authentication,
-                                     RedirectAttributes redirectAttributes) {
-        Tourist tourist = currentTourist(authentication);
-        try {
-            String url = fileStorageService.storeImage(image, "users", "user-" + tourist.getId());
-            userService.updateProfileImage(tourist, url, fileStorageService);
-            redirectAttributes.addFlashAttribute("message", "Se actualizó tu foto de perfil.");
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/tourists/" + tourist.getId();
-    }
-
-    @PostMapping("/tourist/profile-image/delete")
-    public String deleteProfileImage(Authentication authentication, RedirectAttributes redirectAttributes) {
-        Tourist tourist = currentTourist(authentication);
-        userService.updateProfileImage(tourist, null, fileStorageService);
-        redirectAttributes.addFlashAttribute("message", "Se quitó tu foto de perfil.");
-        return "redirect:/tourists/" + tourist.getId();
     }
 
     // Quitar una tarjeta guardada

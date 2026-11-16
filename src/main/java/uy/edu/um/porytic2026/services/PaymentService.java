@@ -11,6 +11,7 @@ import uy.edu.um.porytic2026.exceptions.BusinessException;
 import uy.edu.um.porytic2026.payments.GatewayPayment;
 import uy.edu.um.porytic2026.payments.GatewayRefund;
 import uy.edu.um.porytic2026.payments.MercadoPagoClient;
+import uy.edu.um.porytic2026.payments.PaymentGatewayException;
 import uy.edu.um.porytic2026.repository.BookingRepository;
 import uy.edu.um.porytic2026.repository.PaymentMethodRepository;
 import uy.edu.um.porytic2026.repository.PaymentRepository;
@@ -77,6 +78,12 @@ public class PaymentService {
         return mercadoPago.getPublicKey();
     }
 
+    // Email con el que paga el turista: en modo de prueba, el de la cuenta de prueba compradora
+    public String payerEmailFor(Tourist tourist) {
+        String testEmail = mercadoPago.getTestPayerEmail();
+        return testEmail == null || testEmail.isBlank() ? tourist.getEmail() : testEmail;
+    }
+
     // La reserva tiene que existir y ser del turista que inició sesión
     public Booking findOwnBooking(Long bookingId, Tourist tourist) {
         return bookingRepository.findById(bookingId)
@@ -93,8 +100,16 @@ public class PaymentService {
     public Payment payWithCard(Long bookingId, Tourist tourist, CardPaymentRequest card) {
         Booking booking = findOwnBooking(bookingId, tourist);
 
-        // Por si ya pagó antes (por ejemplo, en otra pestaña): primero se le pregunta a Mercado Pago
-        syncWithGateway(booking);
+        // Si ya hubo un intento de pago (por ejemplo, en otra pestaña), primero se le pregunta a Mercado Pago
+        // cómo terminó. Si la consulta falla, se sigue igual: el cobro nuevo usa una clave de idempotencia
+        // y la reserva solo se confirma si Mercado Pago aprueba el pago.
+        if (paymentRepository.findByBookingId(booking.getId()).isPresent()) {
+            try {
+                syncWithGateway(booking);
+            } catch (PaymentGatewayException e) {
+                log.warn("No se pudo consultar el pago anterior de la reserva {}: {}", booking.getId(), e.getMessage());
+            }
+        }
 
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
             throw new BusinessException("Esta reserva ya está pagada y confirmada");
@@ -222,6 +237,7 @@ public class PaymentService {
             return payment; // ya se devolvió (todo o en parte): Mercado Pago lo sigue mostrando "aprobado", no se vuelve atrás
         }
         PaymentStatus status = toStatus(result.status());
+        log.info("Mercado Pago - pago {} de la reserva {}: {} ({})", result.id(), booking.getId(), result.status(), result.statusDetail());
         if (payment.getCreatedAt() == null || (result.id() != null && !result.id().equals(payment.getExternalReference()))) {
             payment.setCreatedAt(LocalDateTime.now(clock)); // nuevo intento de pago
         }
@@ -313,13 +329,9 @@ public class PaymentService {
             payment.put("issuer_id", card.getIssuerId());
         }
 
+        // Del comprador solo se manda el email: el documento del titular ya viaja dentro del token de la tarjeta
         Map<String, Object> payer = new LinkedHashMap<>();
         payer.put("email", tourist.getEmail());
-        if (!isBlank(card.getIdentificationNumber())) {
-            payer.put("identification", Map.of(
-                    "type", isBlank(card.getIdentificationType()) ? "CI" : card.getIdentificationType(),
-                    "number", card.getIdentificationNumber()));
-        }
         payment.put("payer", payer);
 
         payment.put("external_reference", REFERENCE_PREFIX + booking.getId()); // para saber de qué reserva es

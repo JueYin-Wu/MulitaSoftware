@@ -204,7 +204,6 @@ class PaymentServiceTest {
     @Test
     void anApprovedCardPaymentConfirmsTheBooking() {
         when(bookingRepository.findById(12L)).thenReturn(Optional.of(booking));
-        when(mercadoPago.searchPayments("booking-12")).thenReturn(List.of());
         when(mercadoPago.createPayment(anyMap())).thenReturn(cardResult("approved", "accredited"));
         when(paymentRepository.findByBookingId(12L)).thenReturn(Optional.empty());
 
@@ -218,7 +217,6 @@ class PaymentServiceTest {
     @Test
     void theAmountIsCalculatedByTheServerNotTheBrowser() {
         when(bookingRepository.findById(12L)).thenReturn(Optional.of(booking));
-        when(mercadoPago.searchPayments("booking-12")).thenReturn(List.of());
         when(mercadoPago.createPayment(anyMap())).thenReturn(cardResult("approved", "accredited"));
         when(paymentRepository.findByBookingId(12L)).thenReturn(Optional.empty());
 
@@ -237,7 +235,6 @@ class PaymentServiceTest {
     @Test
     void aRejectedCardKeepsTheBookingPendingToRetry() {
         when(bookingRepository.findById(12L)).thenReturn(Optional.of(booking));
-        when(mercadoPago.searchPayments("booking-12")).thenReturn(List.of());
         when(mercadoPago.createPayment(anyMap())).thenReturn(cardResult("rejected", "cc_rejected_insufficient_amount"));
         when(paymentRepository.findByBookingId(12L)).thenReturn(Optional.empty());
 
@@ -250,7 +247,6 @@ class PaymentServiceTest {
     @Test
     void cardPaymentWhenMercadoPagoIsDownSavesNothing() {
         when(bookingRepository.findById(12L)).thenReturn(Optional.of(booking));
-        when(mercadoPago.searchPayments("booking-12")).thenReturn(List.of());
         when(mercadoPago.createPayment(anyMap()))
                 .thenThrow(new PaymentGatewayUnavailableException("Mercado Pago no está disponible (503)", null));
 
@@ -263,7 +259,6 @@ class PaymentServiceTest {
     @Test
     void withoutCardTokenNothingIsCharged() {
         when(bookingRepository.findById(12L)).thenReturn(Optional.of(booking));
-        when(mercadoPago.searchPayments("booking-12")).thenReturn(List.of());
         CardPaymentRequest empty = card();
         empty.setToken(" ");
 
@@ -275,10 +270,21 @@ class PaymentServiceTest {
     void aConfirmedBookingCannotBePaidAgain() {
         booking.setStatus(BookingStatus.CONFIRMED);
         when(bookingRepository.findById(12L)).thenReturn(Optional.of(booking));
-        when(mercadoPago.searchPayments("booking-12")).thenReturn(List.of());
 
         assertThrows(BusinessException.class, () -> paymentService.payWithCard(12L, tourist, card()));
         verify(mercadoPago, never()).createPayment(anyMap());
+    }
+
+    @Test
+    void anUnpaidBookingIsChargedWithoutSearchingMercadoPagoFirst() {
+        when(bookingRepository.findById(12L)).thenReturn(Optional.of(booking));
+        when(paymentRepository.findByBookingId(12L)).thenReturn(Optional.empty());
+        when(mercadoPago.createPayment(anyMap())).thenReturn(cardResult("approved", "accredited"));
+
+        paymentService.payWithCard(12L, tourist, card());
+
+        verify(mercadoPago, never()).searchPayments(any());
+        assertEquals(BookingStatus.CONFIRMED, booking.getStatus());
     }
 
     @Test

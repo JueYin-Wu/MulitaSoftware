@@ -75,7 +75,7 @@ public class PaymentController {
                 && payment.getExternalReference() != null);
         model.addAttribute("paymentsConfigured", paymentService.isConfigured());
         model.addAttribute("publicKey", paymentService.getPublicKey());
-        model.addAttribute("payerEmail", tourist.getEmail());
+        model.addAttribute("payerEmail", paymentService.payerEmailFor(tourist));
         model.addAttribute("forecast", weatherService.forecastFor(
                 booking.getAvailability().getActivity().getLocation(), booking.getAvailability().getDate()));
         return "tourist/payment";

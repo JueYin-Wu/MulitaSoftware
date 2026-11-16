@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/provider/**").hasRole("PROVIDER")
                         .requestMatchers("/tourist/**").hasRole("TOURIST")
+                        // Editar perfil: turistas y prestadores (los administradores no tienen perfil)
+                        .requestMatchers("/profile/**").hasAnyRole("TOURIST", "PROVIDER")
                         // Todo lo demás requiere haber iniciado sesión
                         .anyRequest().authenticated()
                 )

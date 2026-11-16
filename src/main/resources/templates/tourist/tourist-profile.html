@@ -23,18 +23,9 @@
                     2 actividades realizadas · 1 reseña</p>
             </div>
 
-            <!-- Solo el dueño del perfil puede cambiar su foto -->
-            <div class="profile-photo-actions" th:if="${isOwner}">
-                <h2>Foto de perfil</h2>
-                <p class="muted">JPG, PNG o WEBP, hasta 10 MB.</p>
-                <form th:action="@{/tourist/profile-image(${_csrf.parameterName}=${_csrf.token})}" method="post"
-                      enctype="multipart/form-data" class="upload-form">
-                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
-                    <button type="submit" class="btn btn-primary btn-sm">Subir foto</button>
-                </form>
-                <form th:if="${tourist.profileImageUrl != null}" th:action="@{/tourist/profile-image/delete}" method="post" class="inline-form">
-                    <button type="submit" class="btn btn-outline btn-sm">Quitar foto</button>
-                </form>
+            <!-- Solo el dueño del perfil puede editarlo -->
+            <div class="profile-head-actions" th:if="${isOwner}">
+                <a th:href="@{/profile/edit}" class="btn btn-primary btn-pill">Editar perfil</a>
             </div>
         </section>
 
@@ -113,6 +104,5 @@
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
-<script th:src="@{/js/file-size-check.js}"></script>
 </body>
 </html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Editar perfil')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="panel-page">
+    <div class="container narrow">
+        <nav class="breadcrumb" aria-label="Ubicación">
+            <a th:href="@{${backUrl}}" th:text="${isProvider} ? 'Mi portal' : 'Mi perfil'">Mi perfil</a>
+            <span aria-hidden="true">/</span>
+            <span>Editar perfil</span>
+        </nav>
+
+        <div class="panel-title">
+            <h1>Editar perfil</h1>
+            <p th:text="${isProvider} ? 'Actualizá tus datos y los de tu emprendimiento. Es lo que ven los turistas en tu perfil.' : 'Actualizá tus datos personales y tu foto.'">Actualizá tus datos.</p>
+        </div>
+
+        <div class="alert alert-success" th:if="${message}" th:text="${message}">Mensaje</div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}">Error</div>
+
+        <!-- Foto de perfil (formulario aparte porque sube un archivo) -->
+        <section class="info-card profile-photo-card">
+            <span th:replace="~{fragments/avatar :: avatar(${user}, 'lg')}"></span>
+            <div class="profile-photo-actions">
+                <h2>Foto de perfil</h2>
+                <p class="muted">JPG, PNG o WEBP, hasta 10 MB.</p>
+                <!-- El token de seguridad va también en la dirección para que funcione con archivos (multipart) -->
+                <form th:action="@{/profile/image(${_csrf.parameterName}=${_csrf.token})}" method="post"
+                      enctype="multipart/form-data" class="upload-form">
+                    <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+                    <button type="submit" class="btn btn-primary btn-sm">Subir foto</button>
+                </form>
+                <form th:if="${user.profileImageUrl != null}" th:action="@{/profile/image/delete}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn-outline btn-sm">Quitar foto</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Datos -->
+        <section class="info-card">
+            <form th:action="@{/profile/edit}" th:object="${form}" method="post" novalidate>
+
+                <div class="alert alert-error" th:if="${#fields.hasAnyErrors()}">
+                    Hay datos que no son válidos. Revisá los campos marcados en rojo.
+                </div>
+
+                <fieldset>
+                    <legend>Datos personales</legend>
+                    <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">Nombre</label>
+                        <input type="text" id="firstName" th:field="*{firstName}" th:errorclass="is-invalid">
+                        <p class="field-error" th:if="${#fields.hasErrors('firstName')}" th:text="${#fields.errors('firstName')[0]}"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Apellido</label>
+                        <input type="text" id="lastName" th:field="*{lastName}" th:errorclass="is-invalid">
+                        <p class="field-error" th:if="${#fields.hasErrors('lastName')}" th:text="${#fields.errors('lastName')[0]}"></p>
+                    </div>
+                    </div>
+                    <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Correo electrónico</label>
+                        <input type="email" id="email" th:field="*{email}" th:errorclass="is-invalid" autocomplete="email">
+                        <p class="field-error" th:if="${#fields.hasErrors('email')}" th:text="${#fields.errors('email')[0]}"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Teléfono</label>
+                        <input type="tel" id="phone" th:field="*{phone}" th:errorclass="is-invalid" placeholder="099 123 456">
+                        <p class="field-error" th:if="${#fields.hasErrors('phone')}" th:text="${#fields.errors('phone')[0]}"></p>
+                    </div>
+                    </div>
+
+                    <!-- Solo turistas -->
+                    <div class="form-group" th:unless="${isProvider}">
+                        <label for="birthDate">Fecha de nacimiento</label>
+                        <input type="date" id="birthDate" th:field="*{birthDate}" th:errorclass="is-invalid" autocomplete="bday">
+                        <p class="hint">Se usa para controlar la edad mínima de las actividades.</p>
+                        <p class="field-error" th:if="${#fields.hasErrors('birthDate')}" th:text="${#fields.errors('birthDate')[0]}"></p>
+                    </div>
+
+                    <!-- Datos que no se pueden cambiar -->
+                    <dl class="data-list readonly-data">
+                        <div><dt>Usuario</dt><dd th:text="'@' + ${user.username}">@usuario</dd></div>
+                        <div th:unless="${isProvider}"><dt>Documento</dt>
+                            <dd th:text="(${user.documentType != null and user.documentType.name() == 'PASSPORT'} ? 'Pasaporte ' : 'CI ') + ${user.idDocument}">CI 1.234.567-2</dd></div>
+                    </dl>
+                </fieldset>
+
+                <!-- Solo prestadores -->
+                <fieldset th:if="${isProvider}">
+                    <legend>Emprendimiento</legend>
+                    <div class="form-group">
+                        <label for="businessName">Nombre del emprendimiento</label>
+                        <input type="text" id="businessName" th:field="*{businessName}" th:errorclass="is-invalid">
+                        <p class="field-error" th:if="${#fields.hasErrors('businessName')}" th:text="${#fields.errors('businessName')[0]}"></p>
+                    </div>
+                    <div th:if="${isCompany}">
+                    <div class="form-group">
+                        <label for="legalRepresentative">Responsable</label>
+                        <input type="text" id="legalRepresentative" th:field="*{legalRepresentative}" th:errorclass="is-invalid">
+                        <p class="field-error" th:if="${#fields.hasErrors('legalRepresentative')}" th:text="${#fields.errors('legalRepresentative')[0]}"></p>
+                    </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Dirección</label>
+                        <input type="text" id="address" th:field="*{address}" th:errorclass="is-invalid" placeholder="Calle, número, localidad">
+                        <p class="field-error" th:if="${#fields.hasErrors('address')}" th:text="${#fields.errors('address')[0]}"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceDescription">Descripción de los servicios <span class="hint">(opcional)</span></label>
+                        <textarea id="serviceDescription" th:field="*{serviceDescription}" th:errorclass="is-invalid" maxlength="255"
+                                  placeholder="Contá brevemente qué actividades ofrecés"></textarea>
+                        <p class="field-error" th:if="${#fields.hasErrors('serviceDescription')}" th:text="${#fields.errors('serviceDescription')[0]}"></p>
+                    </div>
+                    <dl class="data-list readonly-data">
+                        <div><dt>Tipo</dt><dd th:text="${user.typeLabel}">Persona física</dd></div>
+                        <div><dt>Documento</dt><dd th:text="${user.document}">CI 1.234.567-2</dd></div>
+                    </dl>
+                </fieldset>
+
+                <p class="hint">El usuario y el documento no se pueden cambiar porque identifican tu cuenta.</p>
+
+                <div class="form-actions">
+                    <a th:href="@{${backUrl}}" class="btn btn-outline btn-pill">Cancelar</a>
+                    <button type="submit" class="btn btn-primary btn-pill">Guardar cambios</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script th:src="@{/js/date-input.js}"></script>
+<script th:src="@{/js/file-size-check.js}"></script>
+</body>
+</html>

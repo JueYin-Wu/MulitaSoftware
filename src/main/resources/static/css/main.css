@@ -528,6 +528,11 @@ a.detail-provider:hover { text-decoration: none; background: var(--surface-2); c
 /* Perfil del turista */
 .profile-handle { color: var(--cyan); font-weight: 600; }
 .profile-head .profile-photo-actions { margin-left: auto; max-width: 340px; }
+/* Botones "Editar perfil" a la derecha del encabezado del perfil */
+.profile-head-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; align-self: center; }
+.provider-head { margin-bottom: 20px; }
+.readonly-data { margin: 6px 0 4px; opacity: 0.85; }
+@media (max-width: 640px) { .profile-head-actions { margin-left: 0; width: 100%; } .profile-head-actions .btn { flex: 1; text-align: center; } }
 .profile-block { margin-top: 28px; }
 .booking-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .booking-item { display: flex; align-items: center; gap: 14px; padding: 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }

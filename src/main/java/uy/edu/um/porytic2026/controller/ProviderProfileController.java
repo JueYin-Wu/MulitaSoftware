@@ -2,6 +2,7 @@ package uy.edu.um.porytic2026.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +27,7 @@ public class ProviderProfileController {
     }
 
     @GetMapping("/providers/{id}")
-    public String profile(@PathVariable Long id, Model model) {
+    public String profile(@PathVariable Long id, Authentication authentication, Model model) {
         Provider provider;
         try {
             provider = providerService.findApprovedById(id); // solo prestadores aprobados
@@ -37,6 +38,8 @@ public class ProviderProfileController {
         List<Review> reviews = activityService.findProviderReviews(id);
         Double averageRating = activityService.averageRating(reviews);
         model.addAttribute("provider", provider);
+        // ¿Es el propio prestador mirando su perfil? Entonces ve el botón "Editar perfil"
+        model.addAttribute("isOwner", authentication != null && provider.getUsername().equals(authentication.getName()));
         model.addAttribute("activities", activityService.findPublishedByProvider(id)); // sin las dadas de baja
         model.addAttribute("reviews", reviews.stream().limit(5).toList()); // las 5 más recientes
         model.addAttribute("reviewCount", reviews.size());
