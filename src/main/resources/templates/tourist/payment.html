@@ -62,6 +62,11 @@
 
                 <!-- Sin pagar -->
                 <th:block th:if="${booking.status.name() == 'PENDING'}">
+                    <!-- Plazo para pagar -->
+                    <p class="alert alert-warning" th:if="${booking.paymentDeadline != null and !inProcess}">
+                        Tenés hasta el <strong th:text="${#temporals.format(booking.paymentDeadline, 'dd/MM')} + ' a las ' + ${#temporals.format(booking.paymentDeadline, 'HH:mm')} + ' h'">01/01 a las 10:00 h</strong>
+                        para pagar. Después la reserva se vence y los lugares se liberan.
+                    </p>
                     <!-- Esperando a Mercado Pago -->
                     <div th:if="${inProcess}" class="payment-state">
                         <div class="payment-icon payment-wait">⏳</div>

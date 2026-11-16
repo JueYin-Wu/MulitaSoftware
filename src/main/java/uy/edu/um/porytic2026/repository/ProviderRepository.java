@@ -14,4 +14,9 @@ public interface ProviderRepository extends JpaRepository<Provider, Long> {
     List<Provider> findByStatusOrderByRegistrationDateAsc(ProviderStatus status);
 
     long countByStatus(ProviderStatus status);
+
+    // Prestadores con una suspensión vigente (pestaña "Suspendidos" del admin)
+    List<Provider> findBySuspendedTrueOrderByBusinessNameAsc();
+
+    long countBySuspendedTrue();
 }

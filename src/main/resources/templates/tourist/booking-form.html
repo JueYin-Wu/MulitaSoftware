@@ -114,7 +114,8 @@
                     </div>
                     <p class="hint" th:text="'$ ' + ${#numbers.formatDecimal(activity.price, 1, 'POINT', 0, 'COMMA')} + ' por persona'">por persona</p>
 
-                    <p class="alert alert-info">La reserva queda <strong>pendiente de pago</strong> y te guarda los lugares.</p>
+                    <p class="alert alert-info">La reserva queda <strong>pendiente de pago</strong> y te guarda los lugares
+                        durante <strong th:text="${paymentMinutes} + ' minutos'">30 minutos</strong>. Si no pagás en ese plazo, se vence y los lugares se liberan.</p>
 
                     <button type="submit" class="btn btn-primary btn-block btn-pill">Confirmar reserva</button>
                     <p class="switch-link text-center"><a th:href="@{/activities/{id}(id=${activity.id})}">← Volver a la actividad</a></p>

@@ -22,6 +22,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Todas las reservas de un turista
     List<Booking> findByTouristId(Long touristId);
 
+    // Reservas en cierto estado (para buscar las PENDING que se vencieron)
+    List<Booking> findByStatus(BookingStatus status);
+
     // Cuántas reservas en cierto estado tiene una actividad (para los tipos de actividad más reservados)
     long countByAvailabilityActivityIdAndStatus(Long activityId, BookingStatus status);
 

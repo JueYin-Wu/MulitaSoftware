@@ -1333,6 +1333,49 @@ input[type="file"].is-invalid { border: 1px solid var(--danger); border-radius: 
     .booking-layout { grid-template-columns: 1fr; }
 }
 
+/* ---------- Sanciones a prestadores ---------- */
+
+.sanction-alert { border-color: var(--danger); margin-bottom: 20px; }
+.sanction-types { display: grid; gap: 8px; margin-bottom: 16px; }
+.sanction-types .check-item { align-items: flex-start; }
+.sanction-types .check-item input { margin-top: 3px; }
+.check-item.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.sanction-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.sanction-item { padding: 14px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; }
+.sanction-item p { margin: 8px 0 0; white-space: pre-line; }
+.sanction-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+.info-card.full-width { grid-column: 1 / -1; }
+
+/* ---------- Vencimiento de reservas sin pagar ---------- */
+
+.payment-deadline { display: block; color: var(--amber); font-weight: 600; }
+
+/* ---------- Paginación de listas largas ---------- */
+
+.pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin-top: 32px; }
+.page-link {
+    min-width: 40px;
+    padding: 8px 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+a.page-link:hover { border-color: var(--green); color: var(--green); }
+.page-link.current { background: var(--green); border-color: var(--green); color: #04130d; }
+.page-link.disabled { opacity: 0.4; cursor: default; }
+.page-gap { padding: 0 4px; color: var(--muted); }
+.results-count .muted { font-weight: 400; }
+#resultados { scroll-margin-top: 90px; }
+
+@media (max-width: 720px) {
+    .pagination .page-link[rel], .pagination .page-link.disabled { flex-basis: calc(50% - 6px); order: 1; }
+}
+
 /* ---------- Celulares ---------- */
 
 @media (max-width: 960px) {

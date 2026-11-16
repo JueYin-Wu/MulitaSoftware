@@ -26,9 +26,14 @@ public class AdminController {
 
     // Lista de solicitudes. Por defecto muestra las pendientes: /admin/providers?status=APPROVED
     @GetMapping("/providers")
-    public String providers(@RequestParam(defaultValue = "PENDING") ProviderStatus status, Model model) {
-        model.addAttribute("providers", providerService.findByStatus(status));
-        model.addAttribute("status", status);
+    public String providers(@RequestParam(defaultValue = "PENDING") ProviderStatus status,
+                            @RequestParam(defaultValue = "false") boolean suspended,
+                            Model model) {
+        // /admin/providers?suspended=true -> prestadores con una suspensión vigente
+        model.addAttribute("providers", suspended ? providerService.findSuspended() : providerService.findByStatus(status));
+        model.addAttribute("status", suspended ? ProviderStatus.APPROVED : status);
+        model.addAttribute("showSuspended", suspended);
+        model.addAttribute("suspendedCount", providerService.countSuspended());
         model.addAttribute("pendingCount", providerService.countByStatus(ProviderStatus.PENDING));
         model.addAttribute("approvedCount", providerService.countByStatus(ProviderStatus.APPROVED));
         model.addAttribute("rejectedCount", providerService.countByStatus(ProviderStatus.REJECTED));

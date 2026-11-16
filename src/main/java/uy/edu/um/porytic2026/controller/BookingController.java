@@ -184,6 +184,7 @@ public class BookingController {
         model.addAttribute("availability", availability);
         model.addAttribute("activity", availability.getActivity());
         model.addAttribute("remaining", remaining);
+        model.addAttribute("paymentMinutes", bookingService.getPaymentMinutes());
         model.addAttribute("participantCount", participantCount);
         model.addAttribute("bookingForm", form);
         // Si el turista no tiene su fecha de nacimiento cargada, el formulario se la pide

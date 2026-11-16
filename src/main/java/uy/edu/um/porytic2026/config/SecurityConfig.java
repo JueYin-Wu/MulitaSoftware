@@ -11,6 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
+import org.springframework.security.authentication.LockedException;
 
 @Configuration
 public class SecurityConfig {
@@ -57,8 +58,9 @@ public class SecurityConfig {
                             response.sendRedirect(request.getContextPath() + target);
                         })
                         .failureHandler((request, response, exception) -> {
-                            // DisabledException = proveedor pendiente o rechazado
-                            String reason = exception instanceof DisabledException ? "pending" : "error";
+                            // LockedException = prestador suspendido; DisabledException = pendiente o rechazado
+                            String reason = exception instanceof LockedException ? "suspended"
+                                    : exception instanceof DisabledException ? "pending" : "error";
                             response.sendRedirect(request.getContextPath() + "/login?" + reason);
                         })
                         .permitAll()

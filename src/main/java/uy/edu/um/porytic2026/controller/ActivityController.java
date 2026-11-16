@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import uy.edu.um.porytic2026.dto.PageResult;
 import uy.edu.um.porytic2026.entities.Activity;
 import uy.edu.um.porytic2026.entities.EquipmentRole;
 import uy.edu.um.porytic2026.entities.Review;
@@ -22,6 +24,9 @@ import java.util.List;
 @Controller
 public class ActivityController {
 
+    // Cuántas actividades se muestran por página en /activities
+    public static final int PAGE_SIZE = 30;
+
     private final ActivityService activityService;
     private final TagService tagService;
     private final WeatherService weatherService;
@@ -32,7 +37,7 @@ public class ActivityController {
         this.weatherService = weatherService;
     }
 
-    // Ejemplo: /activities?q=kayak&department=Rocha&tag=3&date=2026-11-07&maxPrice=2000&sort=price_asc
+    // Ejemplo: /activities?q=kayak&department=Rocha&tag=3&date=2026-11-07&maxPrice=2000&sort=price_asc&page=2
     @GetMapping("/activities")
     public String list(@RequestParam(required = false) String q,
                        @RequestParam(required = false) String department,
@@ -40,6 +45,7 @@ public class ActivityController {
                        @RequestParam(required = false) String date,
                        @RequestParam(required = false) Double maxPrice,
                        @RequestParam(required = false) String sort,
+                       @RequestParam(defaultValue = "1") int page,
                        Model model) {
         // Si la fecha viene mal escrita se ignora (el campo del formulario siempre manda AAAA-MM-DD)
         LocalDate day = null;
@@ -51,7 +57,14 @@ public class ActivityController {
             }
         }
 
-        model.addAttribute("activities", activityService.search(q, department, tag, day, maxPrice, sort));
+        // Se busca con todos los filtros y después se muestra solo la página pedida (de a PAGE_SIZE)
+        PageResult<Activity> pageResult = PageResult.of(
+                activityService.search(q, department, tag, day, maxPrice, sort), page, PAGE_SIZE);
+        model.addAttribute("pageResult", pageResult);
+        model.addAttribute("activities", pageResult.getItems());
+        // Dirección actual con los filtros pero sin "page": la usan los botones de página para no perder la búsqueda
+        model.addAttribute("pageBaseUrl", ServletUriComponentsBuilder.fromCurrentRequest()
+                .replaceQueryParam("page").build().toUriString());
         model.addAttribute("departments", ActivityService.DEPARTMENTS);
         model.addAttribute("tags", tagService.findApproved());
         model.addAttribute("today", LocalDate.now().toString());
@@ -81,7 +94,8 @@ public class ActivityController {
         model.addAttribute("activity", activity);
         // Si el prestador la dio de baja, la página se sigue viendo (por las reservas y reseñas viejas)
         // pero sin fechas para reservar
-        model.addAttribute("slots", activity.isPublished() ? activityService.findUpcomingSlots(id) : java.util.List.of());
+        // (lo mismo si el prestador está suspendido)
+        model.addAttribute("slots", activity.isVisibleToTourists() ? activityService.findUpcomingSlots(id) : java.util.List.of());
         // Pronóstico del clima en el lugar de la actividad (fecha -> pronóstico); vacío si la API no respondió
         model.addAttribute("forecasts", weatherService.forecastsFor(activity.getLocation()));
         model.addAttribute("requiredEquipment", activityService.findEquipment(id, EquipmentRole.REQUIRED));

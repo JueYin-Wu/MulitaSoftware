@@ -38,6 +38,12 @@ public class Booking {
     @Column(name = "status")
     private BookingStatus status;
 
+    // Hasta cuándo se puede pagar una reserva PENDING. Pasado ese momento sin pago aprobado,
+    // BookingExpirationJob la pasa a EXPIRED y se liberan los lugares.
+    // (Null en reservas hechas antes de que existiera el vencimiento: ver BookingService.paymentDeadlineOf.)
+    @Column(name = "payment_deadline")
+    private LocalDateTime paymentDeadline;
+
     @ManyToOne
     @JoinColumn(name = "tourist_id", nullable = false)
     private Tourist tourist;

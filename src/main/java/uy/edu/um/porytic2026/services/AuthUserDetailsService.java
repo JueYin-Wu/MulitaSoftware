@@ -33,12 +33,15 @@ public class AuthUserDetailsService implements UserDetailsService {
         // El rol sale del tipo de usuario (herencia de User)
         String role;
         boolean enabled = true;
+        boolean locked = false;
         if (user instanceof Administrator) {
             role = "ADMIN";
         } else if (user instanceof Provider provider) {
             role = "PROVIDER";
             // Un proveedor solo puede entrar si el admin aprobó su solicitud
             enabled = provider.getStatus() == ProviderStatus.APPROVED;
+            // Y no puede entrar mientras tenga una suspensión vigente (ver SanctionService)
+            locked = provider.isSuspended();
         } else {
             role = "TOURIST";
         }
@@ -49,6 +52,7 @@ public class AuthUserDetailsService implements UserDetailsService {
                 .password(user.getPassword())
                 .roles(role)
                 .disabled(!enabled)
+                .accountLocked(locked)
                 .build();
     }
 }

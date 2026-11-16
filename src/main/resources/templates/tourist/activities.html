@@ -63,14 +63,21 @@
                 </div>
             </form>
 
-            <p class="results-count"
-               th:text="${#lists.size(activities)} + (${#lists.size(activities)} == 1 ? ' actividad encontrada' : ' actividades encontradas')">0 actividades</p>
+            <!-- Total encontrado (de todas las páginas) y, si hay varias, cuáles se están viendo -->
+            <p class="results-count" id="resultados">
+                <span th:text="${pageResult.totalItems} + (${pageResult.totalItems} == 1 ? ' actividad encontrada' : ' actividades encontradas')">0 actividades</span>
+                <span class="muted" th:if="${pageResult.paginated}"
+                      th:text="'· mostrando ' + ${pageResult.firstItemNumber} + ' a ' + ${pageResult.lastItemNumber} + ' (página ' + ${pageResult.page} + ' de ' + ${pageResult.totalPages} + ')'">· página 1 de 2</span>
+            </p>
 
             <div class="activity-grid" th:unless="${#lists.isEmpty(activities)}">
                 <th:block th:each="activity : ${activities}">
                     <article th:replace="~{fragments/activity-card :: card(${activity})}"></article>
                 </th:block>
             </div>
+
+            <!-- Botones de página (solo aparecen si hay más de una) -->
+            <nav th:replace="~{fragments/pagination :: pagination(${pageResult}, ${pageBaseUrl})}"></nav>
 
             <div class="empty-state" th:if="${#lists.isEmpty(activities)}">
                 <h3>No encontramos actividades</h3>

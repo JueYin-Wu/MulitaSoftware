@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 
 // Reservas de los turistas: crear una reserva para una fecha de una actividad, consultarlas y cancelarlas.
 @Service
@@ -32,11 +33,47 @@ public class BookingService {
     private final AvailabilityRepository availabilityRepository;
     private final Clock clock;
 
+    // Minutos que tiene el turista para pagar una reserva antes de que se venza (app.bookings.payment-minutes).
+    // Se inyecta con un setter para que los tests puedan crear el service sin Spring (usan el valor por defecto).
+    private int paymentMinutes = 30;
+
     public BookingService(BookingRepository bookingRepository, AvailabilityRepository availabilityRepository,
                           Clock clock) {
         this.bookingRepository = bookingRepository;
         this.availabilityRepository = availabilityRepository;
         this.clock = clock;
+    }
+
+    @Value("${app.bookings.payment-minutes:30}")
+    public void setPaymentMinutes(int paymentMinutes) {
+        this.paymentMinutes = paymentMinutes;
+    }
+
+    public int getPaymentMinutes() {
+        return paymentMinutes;
+    }
+
+    // Hasta cuándo se puede pagar: los minutos de plazo desde que se reservó, pero nunca después
+    // del cierre de reservas de esa fecha (si la actividad empieza antes, se vence antes).
+    public LocalDateTime paymentDeadlineOf(Booking booking) {
+        if (booking.getPaymentDeadline() != null) {
+            return booking.getPaymentDeadline();
+        }
+        // Reservas viejas, sin plazo guardado: se calcula igual a partir de la fecha de reserva
+        LocalDateTime from = booking.getBookingDate() != null ? booking.getBookingDate() : LocalDateTime.now(clock);
+        return computeDeadline(from, booking.getAvailability());
+    }
+
+    // ¿Es una reserva sin pagar a la que ya se le venció el plazo?
+    public boolean isPaymentOverdue(Booking booking) {
+        return booking.getStatus() == BookingStatus.PENDING
+                && !LocalDateTime.now(clock).isBefore(paymentDeadlineOf(booking));
+    }
+
+    private LocalDateTime computeDeadline(LocalDateTime from, Availability availability) {
+        LocalDateTime deadline = from.plusMinutes(paymentMinutes);
+        LocalDateTime closesAt = availability == null ? null : availability.getBookingClosesAt();
+        return closesAt != null && closesAt.isBefore(deadline) ? closesAt : deadline;
     }
 
     // Lugares que quedan libres en una fecha: cupo menos los participantes de las reservas vigentes
@@ -110,13 +147,16 @@ public class BookingService {
             throw new BusinessException("companions", "Revisá los datos de las personas que van");
         }
 
+        LocalDateTime now = LocalDateTime.now(clock);
         Booking booking = Booking.builder()
                 .tourist(tourist)
                 .availability(availability)
                 .participantCount(participantCount)
                 .unitPrice(availability.getActivity().getPrice()) // queda fijo aunque después cambie el precio
                 .status(BookingStatus.PENDING)
-                .bookingDate(LocalDateTime.now(clock))
+                .bookingDate(now)
+                // Si no paga antes de este momento, la reserva se vence y los lugares se liberan
+                .paymentDeadline(computeDeadline(now, availability))
                 .build();
         for (int i = 0; i < participantCount - 1; i++) {
             ParticipantForm data = companions.get(i);
@@ -245,7 +285,7 @@ public class BookingService {
     // ===================== Métodos auxiliares =====================
 
     private void checkBookingOpen(Availability availability) {
-        if (availability.getActivity() != null && !availability.getActivity().isPublished()) {
+        if (availability.getActivity() != null && !availability.getActivity().isVisibleToTourists()) {
             throw new BusinessException("Esta actividad ya no está disponible");
         }
         LocalDateTime now = LocalDateTime.now(clock);

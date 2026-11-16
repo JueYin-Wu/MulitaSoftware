@@ -120,6 +120,15 @@ public class PaymentService {
         if (!LocalDateTime.now(clock).isBefore(booking.getAvailability().getBookingClosesAt())) {
             throw new BusinessException("Ya cerró el plazo para reservar esa fecha, así que no se puede pagar");
         }
+        // Se le pasó el plazo para pagar: en menos de un minuto BookingExpirationJob la vence y libera los lugares
+        if (bookingService.isPaymentOverdue(booking)) {
+            throw new BusinessException("Se venció el plazo para pagar esta reserva y los lugares se liberaron. "
+                    + "Si todavía hay lugar, podés hacer una reserva nueva.");
+        }
+        // Si el prestador fue suspendido (o dio de baja la actividad) después de la reserva, no se cobra
+        if (!booking.getAvailability().getActivity().isVisibleToTourists()) {
+            throw new BusinessException("Esta actividad no está disponible en este momento, así que no se puede pagar");
+        }
         if (expectedAmount(booking) == null) {
             throw new BusinessException("La actividad no tiene precio, no se puede cobrar");
         }
@@ -150,6 +159,22 @@ public class PaymentService {
             return;
         }
         bookingRepository.findById(bookingId).ifPresent(booking -> apply(booking, List.of(payment)));
+    }
+
+    // 2c) Antes de vencer una reserva impaga (BookingExpirationService) se le pregunta a Mercado Pago
+    //     si en realidad la pagó. Devuelve false si no se pudo consultar: en ese caso no se vence todavía.
+    @Transactional
+    public boolean syncBeforeExpiring(Booking booking) {
+        if (!mercadoPago.isConfigured()) {
+            return true; // sin Mercado Pago configurado no hay nada que consultar
+        }
+        try {
+            syncWithGateway(booking);
+            return true;
+        } catch (PaymentGatewayException e) {
+            log.warn("No se pudo consultar el pago de la reserva {} antes de vencerla: {}", booking.getId(), e.getMessage());
+            return false;
+        }
     }
 
     // Resultado de cancelar: la reserva y cuánto se devolvió (null si no correspondía devolver nada)

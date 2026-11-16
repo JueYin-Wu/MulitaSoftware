@@ -109,10 +109,19 @@ public class ProviderService {
         return providerRepository.countByStatus(status);
     }
 
+    // Prestadores con una suspensión vigente
+    public List<Provider> findSuspended() {
+        return providerRepository.findBySuspendedTrueOrderByBusinessNameAsc();
+    }
+
+    public long countSuspended() {
+        return providerRepository.countBySuspendedTrue();
+    }
+
     // Prestador aprobado, para su página pública. Si no existe o no está aprobado, error.
     public Provider findApprovedById(Long id) {
         Provider provider = findById(id);
-        if (provider.getStatus() != ProviderStatus.APPROVED) {
+        if (!provider.isActive()) { // pendiente, rechazado o suspendido
             throw new IllegalArgumentException("El prestador no está disponible");
         }
         return provider;

@@ -36,6 +36,9 @@
                         <span th:if="${forecasts.get(b.id) != null}" class="small">
                             Clima previsto: <span th:replace="~{fragments/weather :: badge(${forecasts.get(b.id)})}"></span>
                         </span>
+                        <!-- Plazo para pagar: después la reserva se vence sola y se liberan los lugares -->
+                        <span class="small payment-deadline" th:if="${b.status.name() == 'PENDING' and b.paymentDeadline != null}"
+                              th:text="'Pagá antes del ' + ${#temporals.format(b.paymentDeadline, 'dd/MM')} + ' a las ' + ${#temporals.format(b.paymentDeadline, 'HH:mm')} + ' h o la reserva se vence'">Pagá antes de...</span>
                         <span class="muted small" th:unless="${#lists.isEmpty(b.participants)}"
                               th:text="'Con: ' + ${#strings.listJoin(b.participants.![firstName + ' ' + lastName], ', ')}">Con: Ana Pérez</span>
                     </div>

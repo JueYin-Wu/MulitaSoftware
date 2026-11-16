@@ -45,6 +45,23 @@
                 </dl>
             </section>
 
+            <!-- Avisos de la administración (advertencias y suspensiones anteriores) -->
+            <section class="info-card full-width" th:unless="${#lists.isEmpty(sanctions)}">
+                <h2>Avisos de la administración</h2>
+                <ul class="sanction-list">
+                    <li class="sanction-item" th:each="s : ${sanctions}">
+                        <div class="sanction-head">
+                            <span class="chip" th:classappend="${s.type.name() == 'SUSPENSION'} ? 'chip-danger' : 'chip-orange'"
+                                  th:text="${s.type.label}">Tipo</span>
+                            <span class="muted" th:text="${#temporals.format(s.date, 'dd/MM/yyyy')}">Fecha</span>
+                            <span class="muted" th:if="${s.liftedDate != null}"
+                                  th:text="'· levantada el ' + ${#temporals.format(s.liftedDate, 'dd/MM/yyyy')}">Levantada</span>
+                        </div>
+                        <p th:text="${s.reason}">Motivo</p>
+                    </li>
+                </ul>
+            </section>
+
             <section class="info-card">
                 <h2>Mis actividades</h2>
                 <p class="muted" th:text="${activityCount == 1} ? 'Tenés 1 actividad publicada.' : 'Tenés ' + ${activityCount} + ' actividades publicadas.'">Actividades</p>
